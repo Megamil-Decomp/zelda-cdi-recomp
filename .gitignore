@@ -1,0 +1,31 @@
+# Local game media and firmware. Never stage these folders.
+/roms/
+/bios/
+/data/
+/build/
+/builds/
+/dist/
+/upstream-cdirecomp/
+/external/
+
+# Generated guest code and extracted resources must remain private.
+/generated/
+/extracted/
+*.bin
+*.rom
+*.iso
+*.chd
+*.cue
+*.img
+*.wav
+*.pcm
+*.nvram
+*.sav
+
+# Host files and tool caches.
+.DS_Store
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.cache/

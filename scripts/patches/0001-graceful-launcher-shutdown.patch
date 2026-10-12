@@ -1,0 +1,57 @@
+--- a/runner/src/main.c
++++ b/runner/src/main.c
+@@ -23,6 +23,7 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
++#include <signal.h>
+ #ifdef _WIN32
+   #include <windows.h>
+ #else
+@@ -36,6 +37,14 @@
+ /* IKAT command $88 asserts the SCC68070 RESET input. It can arrive from deep
+  * inside a recompiled or interpreted CD-RTOS call tree, so it reuses the
+  * proven IRQ depth-zero unwind and distinguishes the landing with this flag. */
++/* Local launcher integration: defer signals to the ordinary persistence path. */
++static volatile sig_atomic_t g_player_shutdown_requested;
++
++static void request_player_shutdown(int signal_number) {
++    (void)signal_number;
++    g_player_shutdown_requested = 1;
++}
++
+ static int g_main_reset_pending;
+ static int g_main_reset_boot_vectors;
+ 
+@@ -70,6 +79,8 @@
+      * a debug tool — immediate, ordered diagnostics matter more than throughput. */
+     setvbuf(stdout, NULL, _IONBF, 0);
+     setvbuf(stderr, NULL, _IONBF, 0);
++    signal(SIGTERM, request_player_shutdown);
++    signal(SIGINT, request_player_shutdown);
+ 
+     const char *rom_path = NULL;
+     const char *disc_path = NULL;
+@@ -389,7 +400,8 @@
+ 
+         for (;;) {
+             uint32_t target;
+-            if (frontend_active && !cdi_frontend_pump()) {
++            if (g_player_shutdown_requested ||
++                (frontend_active && !cdi_frontend_pump())) {
+                 player_quit = 1;
+                 break;
+             }
+@@ -459,10 +471,10 @@
+         printf("[cdi] %u dispatch miss(es); last at $%08X — RULE 0a: resolve "
+                "before other debugging.\n", g_miss_count_any, g_miss_last_addr);
+ 
+-    if (hold) {
++    if (hold && !g_player_shutdown_requested) {
+         printf("[cdi] --hold: rings live on :%d for inspection. Ctrl-C to exit.\n", port);
+         fflush(stdout);
+-        for (;;) {
++        while (!g_player_shutdown_requested) {
+ #ifdef _WIN32
+             Sleep(1000);
+ #else

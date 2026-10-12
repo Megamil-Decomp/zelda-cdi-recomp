@@ -46,4 +46,17 @@ contém resultados e limitações separados.
 
 ## Resultados
 
-Ainda não executados; preencher somente após observar os binários locais.
+### 2026-10-12 — BIOS com seeds explícitas (runtime-faces/gamelon)
+
+| Etapa | Faces | Wand | Evidência privada |
+| --- | --- | --- | --- |
+| Shell | Passou: `Play CD-i` visível, cursor/driver ativos, ~99,5% nativo (inclui BIOS) | Passou | `probes/*-shell-seeded/` |
+| Entrada | Passou: press/release IKAT publicados e lidos pelo guest | Não testado | `probes/faces-launch/` |
+| Carregamento | Passou: Philips → Animation Magic → título → `Game Menu` | Não testado | `probes/faces-timeline/` |
+| Gameplay | Não testado (nenhum comando enviado no menu) | Não testado | — |
+| Recompilação | Pós-clique, maioria interpretada: ~10,0M nativas vs ~28,8M interpretadas em 147 s (~26% nativo, inclui BIOS); `native_state`: 2 compilados, 1 ativo, 2 rejeições de identidade | Não testado | `faces-timeline/timeline.json` |
+
+Builds anteriores sem seeds explícitas ficavam `held` antes do shell
+(`probes/faces-shell*`). Em `pace=1`, o contador de quadros avançou ~20,5/s
+durante a captura; a causa (pacing do driver `dummy`, custo do interpretador ou
+das leituras TCP) não foi isolada. Zelda's Adventure não foi testado.

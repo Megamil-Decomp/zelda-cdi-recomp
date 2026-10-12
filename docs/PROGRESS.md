@@ -1,5 +1,21 @@
 # Progresso
 
+## 2026-10-12 — primeiro boot de Faces até o menu
+
+Git local criado (commit inicial `f870f74`, sem mídia/derivados). Runtimes arm64
+dos três títulos compilados por `scripts/build_native_runtimes.py` com a BIOS
+normalizada (swap16) e seeds explícitas. Detalhes em `RUNTIME_ACCEPTANCE.md`.
+
+- Shell do player: Faces e Wand chegam a `Play CD-i` com cursor ativo.
+- Faces: clique normal via IKAT inicia o disco; logos, título e `Game Menu`
+  observados em capturas privadas (`data/private/probes/faces-timeline/`).
+- Após o clique, a execução do jogo é majoritariamente interpretada
+  (~26% nativo no intervalo pós-clique, incluindo BIOS); há 2 rejeições de identidade de
+  módulo. Não apresentar como recompilação completa.
+- Velocidade aparente ~20,5 quadros/s em `pace=1`; causa não isolada.
+- Não testados: gameplay de Faces, carregamento de Wand e Zelda's Adventure,
+  pacote `.app`/`.dmg`.
+
 ## 2026-10-12 — M0 concluído
 
 O diretório inicial continha somente briefing no README, três pares BIN/CUE e três BIOS. O checkout upstream mencionado no briefing não existia e foi obtido para auditoria. O briefing original foi preservado em `PROJECT_BRIEF.md`; o README agora é a entrada de uso do projeto.

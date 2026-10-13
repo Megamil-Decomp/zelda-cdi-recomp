@@ -1,0 +1,59 @@
+diff -u -r tree_a/runner/src/cdi_frontend.c tree_b/runner/src/cdi_frontend.c
+--- a/runner/src/cdi_frontend.c	2026-10-12 22:57:50
++++ b/runner/src/cdi_frontend.c	2026-10-12 22:57:50
+@@ -58,9 +58,10 @@
+     if (wanted == s.mouse_captured) return 1;
+     if (wanted) {
+         if (SDL_SetRelativeMouseMode(SDL_TRUE) != 0) {
+-            fprintf(stderr, "[frontend] cannot capture relative mouse: %s\n",
++            fprintf(stderr, "[frontend] cannot capture relative mouse: %s (ignoring to prevent unexpected quit)\n",
+                     SDL_GetError());
+-            return 0;
++            s.mouse_captured = 0;
++            return 1;
+         }
+         SDL_SetWindowGrab(s.window, SDL_TRUE);
+         SDL_ShowCursor(SDL_DISABLE);
+@@ -251,7 +252,7 @@
+                  event.window.event == SDL_WINDOWEVENT_FOCUS_LOST)) {
+                 cdi_input_mouse_focus(
+                     event.window.event == SDL_WINDOWEVENT_FOCUS_GAINED);
+-                if (!apply_mouse_capture()) return 0;
++                apply_mouse_capture();
+             } else if (event.type == SDL_MOUSEMOTION) {
+                 cdi_input_mouse_motion(event.motion.xrel, event.motion.yrel);
+             } else if (event.type == SDL_MOUSEBUTTONDOWN ||
+@@ -261,7 +262,10 @@
+                 cdi_input_mouse_button(
+                     button, event.type == SDL_MOUSEBUTTONDOWN);
+             } else if (event.type == SDL_KEYDOWN && !event.key.repeat) {
+-                if (event.key.keysym.scancode == SDL_SCANCODE_ESCAPE) return 0;
++                if ((event.key.keysym.mod & (KMOD_GUI | KMOD_ALT)) &&
++                    (event.key.keysym.scancode == SDL_SCANCODE_ESCAPE ||
++                     event.key.keysym.scancode == SDL_SCANCODE_Q))
++                    return 0;
+                 if (event.key.keysym.scancode == SDL_SCANCODE_F11 ||
+                     (event.key.keysym.scancode == SDL_SCANCODE_RETURN &&
+                      (event.key.keysym.mod & KMOD_ALT)))
+diff -u -r tree_a/runner/src/slave.c tree_b/runner/src/slave.c
+--- a/runner/src/slave.c	2026-10-12 19:16:16
++++ b/runner/src/slave.c	2026-10-12 22:57:50
+@@ -303,9 +303,15 @@
+             return;
+         }
+     }
+-    fprintf(stderr, "[ikat] unmodeled channel-C command $%02X dropped\n",
+-            channel->command[0]);
+-    channel->command_length = 0;
++    /* Fallback for unmodeled channel-C commands (e.g. $F1 tray, $F2 drive status, $F9 TOC, $8x configs):
++     * CD-RTOS waits for A5 <cmd> 00 confirmation. Dropping them causes timeouts
++     * resulting in 'disc dirty or removed' errors. */
++    {
++        uint8_t cmd = channel->command[0];
++        const uint8_t generic_reply[3] = { 0xA5, cmd, 0x00 };
++        channel->command_length = 0;
++        publish_and_interrupt(CHANNEL_C, generic_reply, sizeof generic_reply);
++    }
+ }
+ 
+ static int four_byte_command(uint8_t command) {

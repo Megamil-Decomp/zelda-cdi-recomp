@@ -85,6 +85,8 @@ def main():
     command(["patch", "-p1", "-i", patch], logs / "launcher-patch.log", cwd=source)
     perf_patch = ROOT / "scripts/patches/0002-performance-pacing-audio-vsync.patch"
     command(["patch", "-p1", "-i", perf_patch], logs / "performance-patch.log", cwd=source)
+    stability_patch = ROOT / "scripts/patches/0003-stability-and-adventure-cd-fix.patch"
+    command(["patch", "-p1", "-i", stability_patch], logs / "stability-patch.log", cwd=source)
     canonical = inputs / "cdi490a.be.rom"
     bios_info = normalize_bios(ROOT / "bios/cdi490a.rom", canonical)
     (inputs / "bios-info.json").write_text(json.dumps(bios_info, indent=2) + "\n")

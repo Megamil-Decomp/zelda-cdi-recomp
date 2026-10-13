@@ -1,5 +1,20 @@
 # Progresso
 
+## 2026-10-12 — correção de fechamento inesperado e destravamento de Zelda's Adventure
+
+1. **Prevenção de encerramento prematuro/crash no frontend (`cdi_frontend.c`)**:
+   - Falhas no `SDL_SetRelativeMouseMode` (comuns em alternância de foco no macOS) não causam mais o encerramento do processo (`s.mouse_captured = 0; return 1;`).
+   - O evento de perda/ganho de foco da janela não encerra mais o loop em caso de erro.
+   - A tecla ESC simples não fecha mais o jogo acidentalmente; a saída por teclado requer `Cmd+Q` ou `Cmd+Esc`.
+2. **Resolução do erro "disco retirado ou sujo" no Zelda's Adventure (`slave.c`)**:
+   - Identificada a causa raiz: consultas de diagnóstico do mecanismo de disco (`$F2`) e comandos do Canal C do IKAT (`$F1`, `$F9`, `$8x`) eram descartados pelo emulador, deixando o driver de CD do CD-RTOS em espera infinita de confirmação até timeout.
+   - Implementado fallback respondendo `{ 0xA5, cmd, 0x00 }` com interrupção no Canal C.
+   - Validada a caminhada e transição de telas com mais de 7.000.000 de instruções a 60 FPS cravados sem erros de disco ou travamentos.
+3. **Pipeline e empacotamento**:
+   - Novo patch isolado criado em `scripts/patches/0003-stability-and-adventure-cd-fix.patch` e integrado a `scripts/build_native_runtimes.py`.
+   - Executáveis dos 3 títulos recompilados e empacotados em `dist/Zelda CD-i.app` e `dist/Zelda-CDi-AppleSilicon.dmg`.
+   - 20 testes unitários executados com sucesso em `tests/`.
+
 ## 2026-10-12 — estabilização em 60 FPS cravados e exibição de FPS em tempo real
 
 1. **Eliminação dos gargalos críticos de overhead de depuração**:

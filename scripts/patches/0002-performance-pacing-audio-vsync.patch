@@ -1,6 +1,48 @@
---- runner/src/cdi_frontend.c	2026-10-12 19:16:16
-+++ runner/src/cdi_frontend.c	2026-10-12 21:30:16
-@@ -156,6 +156,7 @@
+--- a/runner/include/debug_server.h	2026-10-12 19:16:16
++++ b/runner/include/debug_server.h	2026-10-12 22:30:00
+@@ -12,6 +12,10 @@
+  * main thread runs the recompiled OS. */
+ void debug_server_init(int port);
+ 
++/* Explicitly enable or disable the high-overhead debug tracing rings and per-frame hashes.
++ * Defaults to disabled during normal player execution for optimal performance. */
++void debug_server_set_tracing(int active);
++
+ /* Per-launch identity echoed by ping. The co-sim supplies a random hex token
+  * so an unrelated or stale process already holding the port cannot be
+  * mistaken for the child that was just launched. Call before init. */
+--- a/runner/src/cdi_frontend.c	2026-10-12 19:16:16
++++ b/runner/src/cdi_frontend.c	2026-10-12 22:30:00
+@@ -135,6 +135,28 @@
+     SDL_RenderCopy(s.renderer, s.texture, NULL, NULL);
+     SDL_RenderPresent(s.renderer);
+     s.shown_generation = generation;
++
++    /* Real-time FPS monitoring */
++    {
++        static uint64_t s_fps_last_time = 0;
++        static uint32_t s_fps_frame_count = 0;
++        uint64_t now_ticks = SDL_GetTicks64();
++        if (s_fps_last_time == 0) {
++            s_fps_last_time = now_ticks;
++        }
++        s_fps_frame_count++;
++        if (now_ticks - s_fps_last_time >= 500) {
++            double elapsed_s = (double)(now_ticks - s_fps_last_time) / 1000.0;
++            double current_fps = (double)s_fps_frame_count / elapsed_s;
++            char title_buf[128];
++            snprintf(title_buf, sizeof(title_buf), "Zelda CD-i — %.1f FPS", current_fps);
++            SDL_SetWindowTitle(s.window, title_buf);
++            fprintf(stderr, "[fps] %.1f FPS (frames=%u in %.2fs)\n", current_fps, s_fps_frame_count, elapsed_s);
++            fflush(stderr);
++            s_fps_last_time = now_ticks;
++            s_fps_frame_count = 0;
++        }
++    }
+     return 1;
+ }
+ 
+@@ -156,6 +178,7 @@
  int cdi_frontend_init(int capture_mouse) {
      SDL_SetMainReady();
      SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
@@ -8,7 +50,7 @@
      if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER | SDL_INIT_EVENTS) != 0) {
          fprintf(stderr, "[frontend] SDL initialization failed: %s\n", SDL_GetError());
          return 0;
-@@ -166,7 +167,7 @@
+@@ -166,7 +189,7 @@
          desired.freq = CDI_AUDIO_OUTPUT_RATE;
          desired.format = AUDIO_S16SYS;
          desired.channels = CDI_AUDIO_OUTPUT_CHANNELS;
@@ -17,17 +59,117 @@
          s.audio_device = SDL_OpenAudioDevice(NULL, 0, &desired, NULL, 0);
          if (s.audio_device)
              SDL_PauseAudioDevice(s.audio_device, 0);
---- runner/src/runtime.c	2026-10-12 19:16:16
-+++ runner/src/runtime.c	2026-10-12 21:30:36
-@@ -16,6 +16,7 @@
+--- a/runner/src/debug_server.c	2026-10-12 19:16:16
++++ b/runner/src/debug_server.c	2026-10-12 22:30:00
+@@ -58,7 +58,12 @@
+ #define CDI_FRAME_RING_LEN 36000   /* ~10 min @ 60 Hz, matching NES/Genesis */
+ 
+ static char s_cosim_session[65];
++static atomic_int s_debug_tracing_active;
+ 
++void debug_server_set_tracing(int active) {
++    atomic_store_explicit(&s_debug_tracing_active, active != 0, memory_order_relaxed);
++}
++
+ void debug_server_set_session(const char *session) {
+     snprintf(s_cosim_session, sizeof s_cosim_session, "%s", session ? session : "");
+ }
+@@ -82,6 +87,7 @@
+ static atomic_ullong s_pause_at_frame;
+ 
+ void debug_trace_mcd_event(uint8_t area, uint16_t line, uint32_t word) {
++    if (!atomic_load_explicit(&s_debug_tracing_active, memory_order_relaxed)) return;
+     const uint64_t prime = 0x00000100000001B3ULL;
+     const uint8_t bytes[7] = {
+         area, (uint8_t)line, (uint8_t)(line >> 8),
+@@ -96,6 +102,7 @@
+ }
+ 
+ void debug_ring_capture_frame(void) {
++    if (!atomic_load_explicit(&s_debug_tracing_active, memory_order_relaxed) && !g_stop_frame) return;
+     CdiFrameRecord *r = &s_frame_ring[s_frame_widx % CDI_FRAME_RING_LEN];
+     r->frame = g_frame_count;
+     r->cpu   = g_cpu;
+@@ -216,19 +223,10 @@
+ 
+ /* Hot path: one per executed block. Kept to a single struct copy. */
+ void debug_trace_block(void) {
+-    /* IRQ delivery safepoint (MC-CDI-007). This runs at EVERY instruction ENTRY
+-     * in both tiers (the recompiled code emits debug_trace_block() after setting
+-     * g_cpu.PC; the interpreter calls it at the top of m68k_interp_step) — the
+-     * one universal per-instruction boundary with g_cpu.PC = the instruction
+-     * about to execute. If an unmasked interrupt is pending, recomp_take_irq()
+-     * builds the exception frame (resume PC = g_cpu.PC) and longjmps to the
+-     * trampoline WITHOUT returning — so the deferred instruction is neither
+-     * traced nor seq-counted here (the handler's first instruction takes this
+-     * seq), exactly as the CeDImu oracle jumps straight from the last poll
+-     * instruction to the handler. External and SCC68070 on-chip requests live
+-     * in separate pending masks, so the fast gate must cover both; otherwise a
+-     * timer interrupt can remain queued without reaching the delivery path. */
+     if (recomp_pending_irq_mask()) recomp_take_irq();
++    if (!atomic_load_explicit(&s_debug_tracing_active, memory_order_relaxed) &&
++        !g_stop_seq && !atomic_load_explicit(&s_stoppc_armed, memory_order_relaxed))
++        return;
+ 
+     CdiTraceRecord *r = &s_trace_ring[s_trace_seq & CDI_TRACE_MASK];
+     r->seq = s_trace_seq;
+@@ -313,6 +311,7 @@
+ static uint64_t       s_store_count = 0;
+ 
+ void debug_trace_store(uint32_t addr, uint32_t val, int size) {
++    if (!atomic_load_explicit(&s_debug_tracing_active, memory_order_relaxed)) return;
+     CdiStoreRecord *r = &s_store_ring[s_store_count & CDI_STORE_MASK];
+     r->seq  = s_trace_seq;
+     r->pc   = g_cpu.PC;
+@@ -404,6 +403,7 @@
+ }
+ 
+ void debug_trace_interp(uint32_t pc) {
++    if (!atomic_load_explicit(&s_debug_tracing_active, memory_order_relaxed)) return;
+     pc &= 0xFFFFFFu;
+     int reason = g_fallback_reason;
+     if (reason < 0 || reason >= FB_REASON_COUNT) reason = FB_NONE;
+@@ -1370,6 +1370,7 @@
+     for (;;) {
+         sock_t cs = accept(ls, NULL, NULL);
+         if (cs == BAD_SOCK) break;
++        atomic_store_explicit(&s_debug_tracing_active, 1, memory_order_relaxed);
+         serve_client(cs);   /* one client at a time, per TCP.md */
+     }
+     close_sock(ls);
+@@ -1383,6 +1384,8 @@
+ 
+ void debug_server_init(int port) {
+     s_port = port;
++    if (g_hold_on_fault || g_stop_seq || g_stop_frame || getenv("CDI_DEBUG_TRACE"))
++        atomic_store_explicit(&s_debug_tracing_active, 1, memory_order_relaxed);
+ #ifdef _WIN32
+     WSADATA wsa;
+     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
+--- a/runner/src/runtime.c	2026-10-12 19:16:16
++++ b/runner/src/runtime.c	2026-10-12 22:30:00
+@@ -16,6 +16,11 @@
  #include <windows.h>
  #else
  #include <time.h>
 +#include <sched.h>
++#if defined(__APPLE__)
++#include <pthread.h>
++#include <pthread/qos.h>
++#endif
  #endif
  
  /* Generated dispatch-table lookup (bios/generated/cdrtos_dispatch.c). */
-@@ -374,10 +375,15 @@
+@@ -318,7 +323,7 @@
+  * stall is re-anchored. Fixed-sequence co-sim leaves pacing disabled. Windows
+  * uses a waitable timer, avoiding Sleep(1)'s legacy 15.6-ms granularity. */
+ #define CDI_CPU_HZ 15104900.0
+-#define CDI_PACE_CHUNK_CYCLES 151049u  /* almost exactly 10 ms */
++#define CDI_PACE_CHUNK_CYCLES 302098u  /* ~20 ms (~1 full CD-i display field) */
+ 
+ static int      s_realtime_pacing;
+ static double   s_realtime_speed = 1.0;
+@@ -374,15 +379,23 @@
      for (;;) {
          double remaining = deadline - host_seconds();
          if (remaining <= 0.0) break;
@@ -35,8 +177,8 @@
 -        ts.tv_sec = (time_t)remaining;
 -        ts.tv_nsec = (long)((remaining - (double)ts.tv_sec) * 1.0e9);
 -        nanosleep(&ts, NULL);
-+        if (remaining > 0.002) {
-+            double wait_s = remaining - 0.0015;
++        if (remaining > 0.005) {
++            double wait_s = remaining - 0.003;
 +            struct timespec ts;
 +            ts.tv_sec = (time_t)wait_s;
 +            ts.tv_nsec = (long)((wait_s - (double)ts.tv_sec) * 1.0e9);
@@ -47,12 +189,20 @@
      }
  }
  #endif
-@@ -398,7 +404,7 @@
+ 
+ void runtime_set_realtime_pacing(int enabled) {
++#if defined(__APPLE__)
++    if (enabled) pthread_set_qos_class_self_np(QOS_CLASS_USER_INTERACTIVE, 0);
++#endif
+     const char *speed = getenv("CDI_PACE_SPEED");
+     s_realtime_pacing = enabled != 0;
+     s_realtime_speed = speed ? strtod(speed, NULL) : 1.0;
+@@ -398,7 +411,7 @@
      if (s_pace_pending_cycles < CDI_PACE_CHUNK_CYCLES) return;
  
      double now = host_seconds();
 -    if (s_pace_deadline == 0.0 || now > s_pace_deadline + 0.200)
-+    if (s_pace_deadline == 0.0 || now > s_pace_deadline + 0.050)
++    if (s_pace_deadline == 0.0 || now > s_pace_deadline + 0.020)
          s_pace_deadline = now;
      s_pace_deadline += (double)s_pace_pending_cycles /
                         (CDI_CPU_HZ * s_realtime_speed);

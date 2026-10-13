@@ -114,9 +114,12 @@ def main():
             emit.extend(["--module", "cdi_zelda"])
         command(emit, logs / (game_id + "-emit.log"))
         runtime = base / ("runtime-" + game_id)
+        cache_file = runtime / "CMakeCache.txt"
+        if cache_file.exists() and "CDI_COSIM_BUILD:BOOL=ON" in cache_file.read_text():
+            shutil.rmtree(runtime)
         command(["cmake", "-S", source / "runner", "-B", runtime,
                  "-DCMAKE_BUILD_TYPE=Release", "-DCMAKE_OSX_DEPLOYMENT_TARGET=13.0",
-                 "-DCMAKE_PREFIX_PATH=/opt/homebrew", "-DCDI_COSIM_BUILD=OFF",
+                 "-DCMAKE_PREFIX_PATH=/opt/homebrew", "-DCDI_COSIM_BUILD:BOOL=OFF",
                  "-DCDI_GAME_GENERATED_DIR=" + str(generated)],
                 logs / (game_id + "-configure.log"))
         command(["cmake", "--build", runtime, "--target", "CdiRuntime", "--parallel", args.jobs],

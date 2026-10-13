@@ -1,6 +1,24 @@
 # Progresso
 
-## 2026-10-12 — correção do layout de controles e otimização drástica de desempenho
+## 2026-10-12 — estabilização em 60 FPS cravados e exibição de FPS em tempo real
+
+1. **Eliminação dos gargalos críticos de overhead de depuração**:
+   - Gating dinâmico de `debug_trace_block`, `debug_trace_store`, `debug_trace_interp` e `debug_ring_capture_frame`.
+   - Remoção de ~124 MB de gravações contínuas de memória em cada instrução e do cálculo contínuo de FNV1a de 368 KB de pixels a cada frame.
+   - Forçado `-DCDI_COSIM_BUILD:BOOL=OFF` em todos os 3 runtimes nativos, eliminando o cálculo do `cdi_cosim_ram_hash`.
+2. **Pacing e QoS interativo no macOS**:
+   - Definido `QOS_CLASS_USER_INTERACTIVE` na thread do runtime.
+   - Pacing com drift re-anchoring imediato em 20ms e chunk de ~20ms, evitando stalls excessivos em `nanosleep`.
+3. **Exibição de FPS em tempo real**:
+   - `present_frame()` em `cdi_frontend.c` mede os frames a cada 500ms e atualiza o título da janela SDL (`Zelda CD-i — 60.0 FPS`).
+4. **Resultados medidos nos 3 títulos**:
+   - **Link: The Faces of Evil**: estabilizado em **60.0 FPS** cravados.
+   - **Zelda: The Wand of Gamelon**: estabilizado em **60.0 FPS** cravados.
+   - **Zelda's Adventure**: estabilizado em **60.0 FPS** cravados.
+   - Áudio perfeitamente contínuo, sem estalos ou engasgos de buffer underrun.
+   - Bundle `dist/Zelda CD-i.app` e instalador `dist/Zelda-CDi-AppleSilicon.dmg` recompilados e atualizados.
+
+## 2026-10-12 — correção do layout de controles e otimização inicial de desempenho
 
 1. **Correção do layout de Controles (`Launcher.swift`)**:
    - `ControlsWindowController` reescrito do zero: removido o `NSBox` com layout quebrado e tamanho fixo rígido de 520px.

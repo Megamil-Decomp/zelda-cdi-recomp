@@ -186,11 +186,28 @@ def main():
         "Feche a janela do jogo para salvar a NVRAM.\n\n"
         "Não redistribua esta build: ela contém código recompilado localmente da sua mídia.\n"
         "Licenças dos componentes acompanham o pacote em Resources/Licenses.\n", encoding="utf-8")
+    icon_source = ROOT / "assets/icon.png"
+    app_icon = ROOT / "app/macos/AppIcon.icns"
+    if icon_source.is_file() and not app_icon.is_file():
+        iconset = work / "AppIcon.iconset"
+        if iconset.exists():
+            shutil.rmtree(iconset)
+        iconset.mkdir(parents=True, exist_ok=True)
+        for px, name in ((16, "icon_16x16.png"), (32, "icon_16x16@2x.png"), (32, "icon_32x32.png"),
+                         (64, "icon_32x32@2x.png"), (128, "icon_128x128.png"), (256, "icon_128x128@2x.png"),
+                         (256, "icon_256x256.png"), (512, "icon_256x256@2x.png"), (512, "icon_512x512.png")):
+            run(["sips", "-z", str(px), str(px), str(icon_source), "--out", str(iconset / name)], capture_output=True)
+        run(["iconutil", "-c", "icns", str(iconset), "-o", str(app_icon)], capture_output=True)
+        shutil.rmtree(iconset, ignore_errors=True)
+    if app_icon.is_file():
+        shutil.copy2(app_icon, resources / "AppIcon.icns")
+
     info = {"CFBundleDevelopmentRegion": "pt_BR", "CFBundleDisplayName": "Zelda CD-i",
             "CFBundleExecutable": "ZeldaCDi", "CFBundleIdentifier": "local.zeldacdi.player",
             "CFBundleInfoDictionaryVersion": "6.0", "CFBundleName": "Zelda CD-i",
             "CFBundlePackageType": "APPL", "CFBundleShortVersionString": "0.1.0",
             "CFBundleVersion": "1", "LSMinimumSystemVersion": "13.0",
+            "CFBundleIconFile": "AppIcon",
             "NSHighResolutionCapable": True, "NSHumanReadableCopyright": "Private local research build"}
     with (contents / "Info.plist").open("wb") as stream:
         plistlib.dump(info, stream)

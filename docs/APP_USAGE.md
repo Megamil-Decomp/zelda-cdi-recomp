@@ -34,7 +34,7 @@ Zelda CD-i.app/
   Contents/
     Info.plist
     MacOS/
-      ZeldaCDiLauncher
+      ZeldaCDi
       CdiRuntime-faces
       CdiRuntime-gamelon
       CdiRuntime-adventure

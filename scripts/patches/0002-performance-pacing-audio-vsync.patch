@@ -1,0 +1,58 @@
+--- runner/src/cdi_frontend.c	2026-10-12 19:16:16
++++ runner/src/cdi_frontend.c	2026-10-12 21:30:16
+@@ -156,6 +156,7 @@
+ int cdi_frontend_init(int capture_mouse) {
+     SDL_SetMainReady();
+     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
++    SDL_SetHint(SDL_HINT_RENDER_VSYNC, "0");
+     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER | SDL_INIT_EVENTS) != 0) {
+         fprintf(stderr, "[frontend] SDL initialization failed: %s\n", SDL_GetError());
+         return 0;
+@@ -166,7 +167,7 @@
+         desired.freq = CDI_AUDIO_OUTPUT_RATE;
+         desired.format = AUDIO_S16SYS;
+         desired.channels = CDI_AUDIO_OUTPUT_CHANNELS;
+-        desired.samples = 1024;
++        desired.samples = 2048;
+         s.audio_device = SDL_OpenAudioDevice(NULL, 0, &desired, NULL, 0);
+         if (s.audio_device)
+             SDL_PauseAudioDevice(s.audio_device, 0);
+--- runner/src/runtime.c	2026-10-12 19:16:16
++++ runner/src/runtime.c	2026-10-12 21:30:36
+@@ -16,6 +16,7 @@
+ #include <windows.h>
+ #else
+ #include <time.h>
++#include <sched.h>
+ #endif
+ 
+ /* Generated dispatch-table lookup (bios/generated/cdrtos_dispatch.c). */
+@@ -374,10 +375,15 @@
+     for (;;) {
+         double remaining = deadline - host_seconds();
+         if (remaining <= 0.0) break;
+-        struct timespec ts;
+-        ts.tv_sec = (time_t)remaining;
+-        ts.tv_nsec = (long)((remaining - (double)ts.tv_sec) * 1.0e9);
+-        nanosleep(&ts, NULL);
++        if (remaining > 0.002) {
++            double wait_s = remaining - 0.0015;
++            struct timespec ts;
++            ts.tv_sec = (time_t)wait_s;
++            ts.tv_nsec = (long)((wait_s - (double)ts.tv_sec) * 1.0e9);
++            nanosleep(&ts, NULL);
++        } else {
++            sched_yield();
++        }
+     }
+ }
+ #endif
+@@ -398,7 +404,7 @@
+     if (s_pace_pending_cycles < CDI_PACE_CHUNK_CYCLES) return;
+ 
+     double now = host_seconds();
+-    if (s_pace_deadline == 0.0 || now > s_pace_deadline + 0.200)
++    if (s_pace_deadline == 0.0 || now > s_pace_deadline + 0.050)
+         s_pace_deadline = now;
+     s_pace_deadline += (double)s_pace_pending_cycles /
+                        (CDI_CPU_HZ * s_realtime_speed);

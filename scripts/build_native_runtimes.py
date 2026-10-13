@@ -83,6 +83,8 @@ def main():
                     ignore=shutil.ignore_patterns(".git", "build", "generated", "__pycache__", ".DS_Store"))
     patch = ROOT / "scripts/patches/0001-graceful-launcher-shutdown.patch"
     command(["patch", "-p1", "-i", patch], logs / "launcher-patch.log", cwd=source)
+    perf_patch = ROOT / "scripts/patches/0002-performance-pacing-audio-vsync.patch"
+    command(["patch", "-p1", "-i", perf_patch], logs / "performance-patch.log", cwd=source)
     canonical = inputs / "cdi490a.be.rom"
     bios_info = normalize_bios(ROOT / "bios/cdi490a.rom", canonical)
     (inputs / "bios-info.json").write_text(json.dumps(bios_info, indent=2) + "\n")

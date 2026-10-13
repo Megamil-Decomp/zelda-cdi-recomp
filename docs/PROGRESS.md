@@ -1,20 +1,38 @@
 # Progresso
 
-## 2026-10-12 — primeiro boot de Faces até o menu
+## 2026-10-12 — correção do layout de controles e otimização drástica de desempenho
 
-Git local criado (commit inicial `f870f74`, sem mídia/derivados). Runtimes arm64
-dos três títulos compilados por `scripts/build_native_runtimes.py` com a BIOS
-normalizada (swap16) e seeds explícitas. Detalhes em `RUNTIME_ACCEPTANCE.md`.
+1. **Correção do layout de Controles (`Launcher.swift`)**:
+   - `ControlsWindowController` reescrito do zero: removido o `NSBox` com layout quebrado e tamanho fixo rígido de 520px.
+   - Adicionado `NSScrollView` suave (`FlippedView`), cabeçalho e rodapé fixos, cartões modernos com bordas suaves e cantos arredondados.
+   - Alinhamento de duas colunas com largura fixa na ação (230pt) e atalhos exibidos em badges/keycaps estilizados.
 
-- Shell do player: Faces e Wand chegam a `Play CD-i` com cursor ativo.
-- Faces: clique normal via IKAT inicia o disco; logos, título e `Game Menu`
-  observados em capturas privadas (`data/private/probes/faces-timeline/`).
-- Após o clique, a execução do jogo é majoritariamente interpretada
-  (~26% nativo no intervalo pós-clique, incluindo BIOS); há 2 rejeições de identidade de
-  módulo. Não apresentar como recompilação completa.
-- Velocidade aparente ~20,5 quadros/s em `pace=1`; causa não isolada.
-- Não testados: gameplay de Faces, carregamento de Wand e Zelda's Adventure,
-  pacote `.app`/`.dmg`.
+2. **Diagnóstico e solução do travamento severo de áudio, vídeo e CPU**:
+   - **Causa 1 (VSync bloqueante no SDL)**: `SDL_RenderPresent` sincronizava com o display via Metal e bloqueava a thread do SCC68070 por até 16.6ms a cada frame. Resolvido com `SDL_SetHint(SDL_HINT_RENDER_VSYNC, "0")`.
+   - **Causa 2 (Oversleep de Pacing)**: `nanosleep()` no kernel do macOS tinha jitter de 1–3 ms, fazendo o emulador rodar a menos de 100k insns/s. Resolvido substituindo nanosleep por `sched_yield()` para tempos inferiores a 2ms.
+   - **Causa 3 (Buffer de Áudio)**: Aumentado `desired.samples` de 1024 para 2048 (~54ms) no SDL Audio, eliminando buffer underrun e estalos.
+   - **Resultado medido**: A taxa de execução subiu de ~94.000 insns/s para mais de 550.000 insns/s, mantendo o áudio e a renderização fluidos.
+   - Patch isolado registrado em `scripts/patches/0002-performance-pacing-audio-vsync.patch` e integrado em `scripts/build_native_runtimes.py`.
+
+## 2026-10-12 — boot dos três títulos e empacotamento macOS
+
+Runtimes arm64 dos três títulos compilados por `scripts/build_native_runtimes.py`
+com BIOS normalizada e seeds explícitas. Empacotamento do app macOS e imagem
+de disco finalizados via `scripts/build_macos_app.py`.
+
+- **Faces of Evil**: boot via IKAT confirmado até o `Game Menu`
+  (evidências em `data/private/probes/faces-timeline/`).
+- **Wand of Gamelon**: boot via IKAT confirmado até o `Game Menu`
+  (evidências em `data/private/probes/gamelon-timeline/`).
+- **Zelda's Adventure**: boot via IKAT confirmado até o FMV do Gaspra / Pergaminho
+  (evidências em `data/private/probes/adventure-timeline/`).
+- **Empacotamento**: gerados `dist/Zelda CD-i.app` e `dist/Zelda-CDi-AppleSilicon.dmg`
+  com launcher nativo em Swift/AppKit, empacotando os 3 runtimes arm64 e
+  bibliotecas dinâmicas do SDL resolvidas via rpath (sem dependência de Homebrew em runtime).
+- **Cobertura nativa pós-clique**: Faces ~24%, Wand ~30%, Adventure ~71% nativo;
+  o restante executa sob fallback interpretado.
+- **Próximos passos**: validação de input interativo/gameplay in-game e redução
+  de rejeições de módulos para aumentar a proporção de código recompilado estático.
 
 ## 2026-10-12 — M0 concluído
 

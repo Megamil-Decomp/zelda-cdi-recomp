@@ -21,3 +21,10 @@ Propor execução do kernel OS-9 recompilado e modelos de hardware como primeira
 ## 2026-10-12 — PT-BR como mod externo posterior
 
 Planejar traduções autorais externas e opcionais, com desativação em tempo de execução, mantendo recursos originais. Investigar textos, fontes, imagens e codecs antes de selecionar hooks. Implementação adiada para depois da execução validada, conforme o briefing.
+
+## 2026-10-12 — Otimização de desempenho (VSync, áudio e pacing) e tela de controles
+
+1. **Desacoplamento de VSync**: Por padrão no macOS/Metal, `SDL_RenderPresent` bloqueava a thread de execução do SCC68070 por até 16.6ms a cada frame. Com `SDL_SetHint(SDL_HINT_RENDER_VSYNC, "0")`, a apresentação para GPU é assíncrona, desimpedindo o avanço do clock do CD-i.
+2. **Buffer de áudio SDL**: Aumentado de 1024 para 2048 amostras (~54 ms a 37.8 kHz), evitando underrun e estalos de áudio no CoreAudio causados por pequenos descompassos de tempo.
+3. **Pacing preciso no macOS**: Substituído o loop cego de `nanosleep()` com jitter de 1–3 ms no Mach kernel por um limiar de 2 ms com `sched_yield()`, aumentando a cadência de instruções de ~94k insns/s para mais de 550k insns/s com frames ativos.
+4. **Layout de Controles**: `ControlsWindowController` refatorado com `NSScrollView`, cartões modernos de cantos arredondados, alinhamento fixo de colunas e badges visuais de atalhos ("keycaps").

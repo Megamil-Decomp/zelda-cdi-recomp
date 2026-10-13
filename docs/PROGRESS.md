@@ -14,6 +14,11 @@
    - Novo patch isolado criado em `scripts/patches/0003-stability-and-adventure-cd-fix.patch` e integrado a `scripts/build_native_runtimes.py`.
    - Executáveis dos 3 títulos recompilados e empacotados em `dist/Zelda CD-i.app` e `dist/Zelda-CDi-AppleSilicon.dmg`.
    - 20 testes unitários executados com sucesso em `tests/`.
+4. **Portabilidade do Launcher e Dicas de Mídia (`Launcher.swift`)**:
+   - Removido caminho absoluto hardcoded do desenvolvedor do manifesto de distribuição (`--no-local-paths`).
+   - Implementada autodeteção inteligente na pasta do bundle (`bundleFolder/bios` e `bundleFolder/roms`), permitindo execução plug-and-play do app ao descompactar o ZIP em qualquer máquina.
+   - Limpeza automática de caminhos herdados inexistentes em `UserDefaults`.
+   - Inclusão de dicas visuais explícitas, placeholders e mensagens de diálogo com nomes e extensões esperadas (`cdi490a.rom` 512 KB e arquivos `.cue/.bin`), totalmente localizado em inglês e português do Brasil.
 
 ## 2026-10-12 — estabilização em 60 FPS cravados e exibição de FPS em tempo real
 

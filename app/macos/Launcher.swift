@@ -55,12 +55,28 @@ private struct L10n {
             return isPt ? "BIOS CD-i" : "CD-i BIOS"
         case "media.disc_title":
             return isPt ? "Disco do jogo" : "Game Disc"
+        case "media.bios_hint":
+            return isPt ? "Arquivo esperado: cdi490a.rom (tamanho exato: 512 KB)" :
+                          "Expected file: cdi490a.rom (exact size: 512 KB)"
+        case "media.disc_hint":
+            return isPt ? "Arquivo esperado: descritor .cue acompanhado do arquivo .bin" :
+                          "Expected file: .cue descriptor accompanied by companion .bin"
         case "media.choose_button":
             return isPt ? "Escolher…" : "Choose…"
         case "media.no_bios":
-            return isPt ? "Selecione a BIOS desta compilação" : "Select compiler-compatible BIOS"
+            return isPt ? "Nenhuma BIOS configurada (esperado: cdi490a.rom)" :
+                          "No BIOS configured (expected: cdi490a.rom)"
         case "media.no_disc":
-            return isPt ? "Selecione o CUE ou o BIN correspondente" : "Select CUE or companion BIN"
+            return isPt ? "Nenhum disco configurado (esperado: arquivo .cue)" :
+                          "No disc configured (expected: .cue descriptor file)"
+        case "media.panel_bios_msg":
+            return isPt ? "Selecione o arquivo da BIOS do CD-i (cdi490a.rom, 512 KB):" :
+                          "Select the CD-i BIOS ROM file (cdi490a.rom, 512 KB):"
+        case "media.panel_disc_msg":
+            return isPt ? "Selecione o descritor .cue correspondente ao disco do jogo:" :
+                          "Select the companion .cue descriptor for the game disc:"
+        case "media.panel_select":
+            return isPt ? "Selecionar" : "Select"
 
         // Buttons
         case "btn.start":
@@ -784,6 +800,8 @@ private final class LauncherDelegate: NSObject, NSApplicationDelegate, NSTableVi
     private let progress = NSProgressIndicator()
     private var biosLabel: NSTextField!
     private var discLabel: NSTextField!
+    private var biosHint: NSTextField!
+    private var discHint: NSTextField!
     private var biosButton: NSButton!
     private var discButton: NSButton!
     private var playButton: NSButton!
@@ -1034,9 +1052,9 @@ private final class LauncherDelegate: NSObject, NSApplicationDelegate, NSTableVi
         detail.addArrangedSubview(gameStatus)
         gameStatus.widthAnchor.constraint(equalTo: detail.widthAnchor).isActive = true
 
-        let biosRow = makeMediaRow(title: L10n.t("media.bios_title"), path: biosPath, selector: #selector(chooseBIOS), isBIOS: true)
+        let biosRow = makeMediaRow(title: L10n.t("media.bios_title"), hintText: L10n.t("media.bios_hint"), path: biosPath, selector: #selector(chooseBIOS), isBIOS: true)
         detail.addArrangedSubview(biosRow)
-        let discRow = makeMediaRow(title: L10n.t("media.disc_title"), path: discPath, selector: #selector(chooseDisc), isBIOS: false)
+        let discRow = makeMediaRow(title: L10n.t("media.disc_title"), hintText: L10n.t("media.disc_hint"), path: discPath, selector: #selector(chooseDisc), isBIOS: false)
         detail.addArrangedSubview(discRow)
 
         let controls = NSStackView()
@@ -1092,15 +1110,21 @@ private final class LauncherDelegate: NSObject, NSApplicationDelegate, NSTableVi
         footerNote.widthAnchor.constraint(equalTo: root.widthAnchor).isActive = true
     }
 
-    private func makeMediaRow(title: String, path: NSTextField, selector: Selector, isBIOS: Bool) -> NSView {
+    private func makeMediaRow(title: String, hintText: String, path: NSTextField, selector: Selector, isBIOS: Bool) -> NSView {
         let group = NSStackView()
         group.orientation = .vertical
         group.alignment = .leading
-        group.spacing = 6
+        group.spacing = 3
         let label = NSTextField(labelWithString: title)
         label.font = .systemFont(ofSize: 12, weight: .semibold)
         group.addArrangedSubview(label)
         if isBIOS { biosLabel = label } else { discLabel = label }
+
+        let hint = NSTextField(labelWithString: hintText)
+        hint.font = .systemFont(ofSize: 11)
+        hint.textColor = .tertiaryLabelColor
+        group.addArrangedSubview(hint)
+        if isBIOS { biosHint = hint } else { discHint = hint }
 
         let row = NSStackView()
         row.orientation = .horizontal
@@ -1128,6 +1152,8 @@ private final class LauncherDelegate: NSObject, NSApplicationDelegate, NSTableVi
         libraryLabel?.stringValue = L10n.t("app.library_title")
         biosLabel?.stringValue = L10n.t("media.bios_title")
         discLabel?.stringValue = L10n.t("media.disc_title")
+        biosHint?.stringValue = L10n.t("media.bios_hint")
+        discHint?.stringValue = L10n.t("media.disc_hint")
         biosButton?.title = L10n.t("media.choose_button")
         discButton?.title = L10n.t("media.choose_button")
         playButton?.title = L10n.t("btn.start")
@@ -1166,19 +1192,50 @@ private final class LauncherDelegate: NSObject, NSApplicationDelegate, NSTableVi
     }
 
     private func autodetectLocalMedia() {
-        guard let manifest = manifest, let rootPath = manifest.localMediaRoot else { return }
-        let root = URL(fileURLWithPath: rootPath, isDirectory: true).standardizedFileURL
-        func existingLocal(_ relative: String?) -> String? {
-            guard let relative = relative, !relative.hasPrefix("/") else { return nil }
-            let url = root.appendingPathComponent(relative).standardizedFileURL
-            guard url.path.hasPrefix(root.path + "/"), fileManager.isReadableFile(atPath: url.path) else { return nil }
-            return url.path
+        guard let manifest = manifest else { return }
+
+        // Localiza raízes candidatas para busca de arquivos:
+        // 1. Pasta pai onde o .app reside (para pacotes zip e instalações portáteis)
+        let bundleFolder = Bundle.main.bundleURL.deletingLastPathComponent().standardizedFileURL
+        var candidateRoots = [bundleFolder]
+
+        // 2. Se houver rootPath configurado no manifesto, adiciona como fallback
+        if let rootPath = manifest.localMediaRoot {
+            candidateRoots.append(URL(fileURLWithPath: rootPath, isDirectory: true).standardizedFileURL)
         }
-        if defaults.string(forKey: "biosPath") == nil, let path = existingLocal(manifest.bios.localRelative) {
+
+        func findReadableRelative(_ relative: String?) -> String? {
+            guard let relative = relative, !relative.hasPrefix("/") else { return nil }
+            for root in candidateRoots {
+                let candidate = root.appendingPathComponent(relative).standardizedFileURL
+                if fileManager.isReadableFile(atPath: candidate.path) {
+                    return candidate.path
+                }
+            }
+            return nil
+        }
+
+        // Valida se a BIOS salva em defaults ainda existe nesta máquina; se não existir, limpa
+        if let savedBios = defaults.string(forKey: "biosPath") {
+            if !fileManager.isReadableFile(atPath: savedBios) {
+                defaults.removeObject(forKey: "biosPath")
+            }
+        }
+        if defaults.string(forKey: "biosPath") == nil, let path = findReadableRelative(manifest.bios.localRelative) {
             defaults.set(path, forKey: "biosPath")
         }
-        for game in manifest.games where defaults.string(forKey: discKey(game)) == nil {
-            if let path = existingLocal(game.localCueRelative) { defaults.set(path, forKey: discKey(game)) }
+
+        // Valida para cada jogo se o disco salvo em defaults existe; se não existir, limpa e tenta autodetectar
+        for game in manifest.games {
+            let key = discKey(game)
+            if let savedDisc = defaults.string(forKey: key) {
+                if !fileManager.isReadableFile(atPath: savedDisc) {
+                    defaults.removeObject(forKey: key)
+                }
+            }
+            if defaults.string(forKey: key) == nil, let path = findReadableRelative(game.localCueRelative) {
+                defaults.set(path, forKey: key)
+            }
         }
     }
 
@@ -1265,6 +1322,8 @@ private final class LauncherDelegate: NSObject, NSApplicationDelegate, NSTableVi
         guard !busy && process == nil, manifest != nil else { return }
         let panel = NSOpenPanel()
         panel.title = L10n.t("media.bios_title")
+        panel.message = L10n.t("media.panel_bios_msg")
+        panel.prompt = L10n.t("media.panel_select")
         panel.canChooseDirectories = false
         panel.allowsMultipleSelection = false
         if #available(macOS 12.0, *) {
@@ -1286,6 +1345,8 @@ private final class LauncherDelegate: NSObject, NSApplicationDelegate, NSTableVi
         guard !busy && process == nil, let game = selectedGame else { return }
         let panel = NSOpenPanel()
         panel.title = "\(L10n.t("media.disc_title")) — \(game.title)"
+        panel.message = "\(L10n.t("media.panel_disc_msg")) (\(game.title))"
+        panel.prompt = L10n.t("media.panel_select")
         panel.canChooseDirectories = false
         panel.allowsMultipleSelection = false
         if #available(macOS 12.0, *) {

@@ -1,22 +1,24 @@
-# 🗡️ Zelda CD-i Native Recompilation
+# 🗡️ Zelda CD-i Native Recompilation (`zelda-cdi-recomp`)
 
 [![Platform](https://img.shields.io/badge/platform-macOS%20Apple%20Silicon-blue.svg)](https://apple.com)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-experimental%20playable%20menus-orange.svg)](#status)
-[![Languages](https://img.shields.io/badge/i18n-English%20%7C%20Portugu%C3%AAs-purple.svg)](#interface)
+[![Status](https://img.shields.io/badge/status-playable%20at%2060%20FPS-brightgreen.svg)](#current-project-status)
+[![Languages](https://img.shields.io/badge/i18n-English%20%7C%20Portugu%C3%AAs-purple.svg)](#launcher-interface)
 
-Port nativo e recompilador estático para os três clássicos do Philips CD-i:
+*English* | [*Português do Brasil*](README.pt-BR.md)
+
+Native static recompilation (AOT) and standalone game player for the classic Philips CD-i trilogy:
 - **Link: The Faces of Evil** (1993)
 - **Zelda: The Wand of Gamelon** (1993)
 - **Zelda's Adventure** (1996)
 
-O projeto reconstrói o código original da arquitetura Philips/Motorola SCC68070 (CD-RTOS / OS-9) diretamente para código de máquina nativo **ARM64 (Apple Silicon)**, eliminando a sobrecarga de emulação pesada tradicional e viabilizando futuros portes para **Windows** e **Linux**.
+Instead of traditional software emulation, this project recompiles the original Motorola/Philips SCC68070 machine code (CD-RTOS / OS-9) ahead-of-time directly into native **ARM64 (Apple Silicon)** machine code. This eliminates the high emulation overhead, delivers locked **60 FPS** gameplay with smooth audio pacing, and establishes a clean foundation for future **Windows** and **Linux** ports.
 
 ---
 
 ## 📸 Screenshots
 
-| Launcher Principal (GUI) | Tela de Controles & Mapeamento |
+| Main Launcher (GUI) | Controls & Key Mapping Window |
 | :---: | :---: |
 | ![Launcher GUI](screenshots/gui.png) | ![Controls Window](screenshots/controls.png) |
 
@@ -26,78 +28,89 @@ O projeto reconstrói o código original da arquitetura Philips/Motorola SCC6807
 
 ---
 
-## 🎮 Status Atual do Projeto
+## 🎮 Current Project Status
 
-Os três jogos já inicializam a partir do cold boot da BIOS oficial, executam a rotina de boot real do CD-i, reconhecem a mídia e carregam com sucesso:
-- **Faces of Evil**: Boot completo até o *Game Menu* (Start Game, Load Game, etc.).
-- **Wand of Gamelon**: Boot completo até o *Game Menu* (Start Game, Load Game, etc.).
-- **Zelda's Adventure**: Boot completo com introdução em FMV do mago Gaspra e pergaminho da história.
-- **Launcher Nativo macOS**: Aplicativo gráfico completo em Swift/AppKit com seleção de jogos, validação automática de checksum SHA-256 da BIOS/Discos, empacotamento em `.app` e instalador `.dmg`.
-- **Suporte Multilíngue na Interface**: Alternância dinâmica entre **English** (padrão) e **Português (Brasil)** no launcher.
-
----
-
-## ⚠️ Requisitos de Mídia (Traga suas próprias ROMs)
-
-> **AVISO IMPORTANTE:** Este repositório **NÃO contém**, distribui ou hospeda nenhuma BIOS, ROM, imagem de disco, áudio ou arte protegida por direitos autorais.
-
-Para utilizar o projeto, você deve fornecer seus próprios arquivos legais:
-1. **BIOS do CD-i**:
-   - `cdi490a.rom` (512 KiB)
-   - O launcher aceita tanto a BIOS original quanto com bytes invertidos (swap16), normalizando-a em cache privado sem alterar seu arquivo original.
-2. **Imagens de Disco dos Jogos**:
-   - Par de arquivos `.cue` e `.bin` (faixa Mode-2 raw de 2352 bytes por setor) para cada título desejado.
-   - O launcher verifica a integridade do disco através do SHA-256 e avisa caso a revisão seja incompatível com os módulos recompilados.
+- **Locked 60 FPS**: Native execution pipeline running at 60 FPS on Apple Silicon with hardware vsync decoupler and dedicated QoS priority.
+- **Link: The Faces of Evil**: Full boot, interactive gameplay menus, cinematic audio and stage progression.
+- **Zelda: The Wand of Gamelon**: Full boot, interactive gameplay menus, stage selection and in-game exploration.
+- **Zelda's Adventure**: Full boot with Gaspra FMV intro, cutscene scroll, overworld exploration, and seamless screen transitions (IKAT Channel-C disc query support).
+- **Native macOS Launcher**: Modern Swift/AppKit desktop application with bilingual support (**English** & **Portuguese (Brazil)**), automated SHA-256 media validation, and standalone `.app` / `.dmg` bundling.
+- **Stability & Crash Prevention**: Protected against accidental quits on focus switching or mouse capture changes.
 
 ---
 
-## 🕹️ Controles Padrão
+## ⚠️ Media Requirements (Bring Your Own Media)
 
-O runtime utiliza **SDL2 nativo**, suportando teclado, gamepads USB/Bluetooth e mouse:
+> **LEGAL NOTICE:** This repository **DOES NOT** contain, distribute, or host any proprietary BIOS ROMs, game disc images, copyrighted audio, video, or artwork.
 
-### ⌨️ Teclado
-| Ação | Teclas Padrão |
+To build and run the recompiled games, you must provide your own legally dumped files:
+
+### 1. CD-i System BIOS
+- **File**: `cdi490a.rom` (exactly 524,288 bytes / 512 KiB).
+- **Compatible models**: Philips CD-i 490, CD-i 910 or compatible mono-board system BIOS.
+- **Note**: Both standard big-endian and byte-swapped (`swap16`) ROM dumps are automatically detected, normalized, and cached in your private workspace without altering your original file.
+
+### 2. Game Disc Images
+- **Format**: Raw Mode-2 CD-ROM dumps consisting of a `.cue` sheet and its companion `.bin` data track (2352 bytes/sector).
+- **Required Titles**:
+  - `Link - The Faces of Evil (Europe).cue` / `.bin`
+  - `Zelda - The Wand of Gamelon (Europe).cue` / `.bin`
+  - `Zelda's Adventure (Europe).cue` / `.bin`
+- **Validation**: The launcher automatically computes the SHA-256 hash of your disc image to confirm that the game revision matches the recompiled binary modules.
+
+---
+
+## 🕹️ Controls
+
+The native runtime uses **SDL2**, supporting keyboard, modern USB/Bluetooth controllers, and mouse cursor input:
+
+### ⌨️ Keyboard
+| Action | Default Keys |
 | :--- | :--- |
-| **Movimento / Direcional** | Setas Direcionais (`↑` `↓` `←` `→`) ou `W`, `A`, `S`, `D` |
-| **Botão 1 (Ação / Atacar / Pular)** | `Espaço`, `Enter` ou tecla `Z` |
-| **Botão 2 (Item secundário / Cancelar)** | `Backspace` ou tecla `X` |
-| **Sair para o Launcher** | `ESC` |
-| **Alternar Tela Cheia** | `F11` ou `Alt + Enter` |
+| **Movement / Directional** | Arrow Keys (`↑` `↓` `←` `→`) or `W`, `A`, `S`, `D` |
+| **Button 1 (Action / Attack / Jump)** | `Space`, `Enter`, or `Z` |
+| **Button 2 (Secondary Item / Cancel)** | `Backspace` or `X` |
+| **Toggle Fullscreen** | `F11` or `Alt + Enter` |
+| **Quit Game** | `Cmd + Q` or `Cmd + ESC` |
 
-### 🎮 Gamepad (Xbox, PlayStation, Switch Pro, genéricos)
-| Ação | Botão |
+### 🎮 Gamepad (Xbox, PlayStation, Switch Pro, generic USB controllers)
+| Action | Controller Mapping |
 | :--- | :--- |
-| **Movimento** | D-Pad ou Analógico Esquerdo |
-| **Botão 1 (Atacar / Confirmar)** | Botão `A` (Xbox) / `✕` (PlayStation) |
-| **Botão 2 (Item secundário)** | Botão `B` (Xbox) / `○` (PlayStation) |
+| **Movement** | D-Pad or Left Analog Stick |
+| **Button 1 (Attack / Confirm)** | Button `A` (Xbox) / `✕` (PlayStation) / `B` (Nintendo) |
+| **Button 2 (Secondary Item)** | Button `B` (Xbox) / `○` (PlayStation) / `A` (Nintendo) |
 
 ### 🖱️ Mouse
-- O movimento do mouse controla o cursor original do CD-i na tela.
-- **Clique esquerdo**: Botão 1 (Ação / Confirmar).
+- Mouse motion moves the on-screen CD-i cursor.
+- **Left click**: Button 1 (Action / Confirm).
 
 ---
 
-## 🛠️ Como Compilar e Executar no macOS
+## 🛠️ How to Build and Run on macOS
 
-### Pré-requisitos
-- macOS 13.0+ (Apple Silicon arm64)
-- Xcode Command Line Tools (`xcode-select --install`)
-- CMake e dependências SDL:
+### Prerequisites
+- macOS 13.0 or later (Apple Silicon arm64 recommended).
+- Xcode Command Line Tools:
+  ```sh
+  xcode-select --install
+  ```
+- CMake and SDL dependencies:
   ```sh
   brew install cmake sdl2
   ```
 
-### 1. Clonar o repositório
+### 1. Clone the Repository
 ```sh
-git clone https://github.com/seu-usuario/zeldas-cdi.git
-cd zeldas-cdi
+git clone https://github.com/Megamil-Decomp/zelda-cdi-recomp.git
+cd zelda-cdi-recomp
 ```
 
-### 2. Posicionar sua mídia
-Coloque seus arquivos nas pastas locais (essas pastas são ignoradas pelo Git e permanecem 100% privadas):
+### 2. Place Your Media Files
+Place your dumps in the local folders (these directories are ignored by Git to protect private files):
 ```text
 bios/
   cdi490a.rom
+
 roms/
   Link The Faces of Evil/
     Link - The Faces of Evil (Europe).cue
@@ -110,44 +123,47 @@ roms/
     Zelda's Adventure (Europe).bin
 ```
 
-### 3. Compilar os Runtimes Nativos
+### 3. Rebuild Native Game Runtimes
 ```sh
-python3 scripts/build_native_runtimes.py
+python3 scripts/build_native_runtimes.py --jobs 4
 ```
 
-### 4. Gerar o Aplicativo (`.app` e `.dmg`)
+### 4. Package Standalone macOS App and DMG
 ```sh
 python3 scripts/build_macos_app.py
 ```
-O pacote final estará disponível em:
+The output will be created in:
 - `dist/Zelda CD-i.app`
 - `dist/Zelda-CDi-AppleSilicon.dmg`
 
-Para abrir diretamente:
+To launch:
 ```sh
 open "dist/Zelda CD-i.app"
 ```
 
 ---
 
-## 📋 Backlog & Próximos Passos
+## 📋 Roadmap & Backlog
 
-- [ ] **Melhorar desempenho**: Otimizar a árvore de emissão de código nativo, eliminar rejeições de módulo por escrita em RAM e reduzir o fallback para o interpretador m68k.
-- [ ] **Traduzir jogos para português do Brasil**: Desenvolver a arquitetura de mod externo (injeção em tempo de execução via JSON de strings, novas fontes com acentuação gráfica e legendas sincronizadas nas cinematics sem alterar o áudio original).
-- [ ] **Aceitar mouse / mira direta**: Aprimorar a responsividade do cursor e mapear ações de mira rápida com o ponteiro do mouse.
-- [ ] **Portar para Windows e Linux**: Adaptar os scripts de compilação e empacotamento para targets Windows (x86_64) e Linux, com suporte a CMake multiplataforma.
-
----
-
-## 🤝 Créditos e Agradecimentos
-
-- **cdirecomp** ([mstan/cdirecomp](https://github.com/mstan/cdirecomp)): Projeto de pesquisa upstream em engenharia reversa do hardware CD-i e núcleo de recompilação m68k por Matthew Stan.
-- **N64Recomp & Zelda64Recomp** ([Zelda64Recomp](https://github.com/Zelda64Recomp/Zelda64Recomp)): Referências e inspiração no modelo de recompilação estática moderna.
-- **libSDL**: Camada de áudio, vídeo e entrada de alta performance.
-- **Philips & Nintendo**: Criadores e detentores dos direitos intelectuais e comerciais originais do hardware Philips CD-i e da franquia The Legend of Zelda.
+- [x] **Stable 60 FPS native execution** on macOS Apple Silicon.
+- [x] **IKAT Channel C support** resolving Zelda's Adventure screen transition disk timeouts.
+- [x] **Bilingual launcher** (English & Brazilian Portuguese).
+- [ ] **Port to Windows & Linux**: Extend CMake configurations and runner backends for Windows x86_64 and Linux.
+- [ ] **Brazilian Portuguese Translation (PT-BR)**: External mod architecture with string replacement, localized fonts, and synchronized cinematic subtitles without modifying original audio.
+- [ ] **Mouse Aiming Enhancement**: Refine mouse cursor responsiveness and optional crosshair aiming.
+- [ ] **Enhanced Static Coverage**: Eliminate residual module rejections to increase the percentage of pure AOT code.
 
 ---
 
-## 📄 Licença
+## 🤝 Credits & Acknowledgements
 
-Este projeto é disponibilizado sob a licença **MIT** para todo o código original, launcher e ferramentas desenvolvidas neste repositório. Consulte o arquivo [LICENSE](LICENSE) para detalhes completos e avisos sobre bibliotecas de terceiros.
+- **cdirecomp** ([mstan/cdirecomp](https://github.com/mstan/cdirecomp)): Upstream CD-i reverse-engineering research and m68k recompiler core by Matthew Stan.
+- **N64Recomp & Zelda64Recomp** ([Zelda64Recomp](https://github.com/Zelda64Recomp/Zelda64Recomp)): Pioneers and inspiration in the modern static recompilation scene.
+- **libSDL**: High-performance multiplatform audio, video, and input backend.
+- **Philips & Nintendo**: Original creators and trademark holders of the Philips CD-i platform and *The Legend of Zelda* franchise.
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License** for all original launcher code, scripts, patches, and tooling developed in this repository. See [LICENSE](LICENSE) for details and third-party notices.

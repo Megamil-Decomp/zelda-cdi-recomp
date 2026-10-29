@@ -13,6 +13,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
+from prepare_sdl_macos import prepare_sdl
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -104,6 +105,11 @@ def main():
     command(["patch", "--batch", "-p1", "-i",
              ROOT / "scripts/patches/0009-interrupt-priority-on-ack.patch"],
             logs / "interrupt-priority-patch.log", cwd=source)
+    for header in ("cdi_player_ui.h", "cdi_player_ui_sdl.h", "cdi_player_ui_frontend.h"):
+        shutil.copy2(ROOT / "app/native" / header, source / "runner/include" / header)
+    command(["patch", "--batch", "-p1", "-i",
+             ROOT / "scripts/patches/0010-player-options-and-mouse.patch"],
+            logs / "player-ui-patch.log", cwd=source)
     canonical = inputs / "cdi490a.be.rom"
     bios_info = normalize_bios(ROOT / "bios/cdi490a.rom", canonical)
     (inputs / "bios-info.json").write_text(json.dumps(bios_info, indent=2) + "\n")
@@ -121,6 +127,7 @@ def main():
              source / "bios/cdrtos_discovered.txt"], logs / "bios-emit.log", cwd=source)
 
     selected = GAME_CUES if args.game == "all" else {args.game: GAME_CUES[args.game]}
+    sdl_dir = prepare_sdl()
     for game_id, cue in selected.items():
         generated = base / "generated" / game_id
         if generated.exists():
@@ -139,6 +146,7 @@ def main():
         command(["cmake", "-S", source / "runner", "-B", runtime,
                  "-DCMAKE_BUILD_TYPE=Release", "-DCMAKE_OSX_DEPLOYMENT_TARGET=13.0",
                  "-DCMAKE_PREFIX_PATH=/opt/homebrew", "-DCDI_COSIM_BUILD:BOOL=OFF",
+                 "-DSDL2_DIR=" + str(sdl_dir),
                  "-DCDI_GAME_GENERATED_DIR=" + str(generated)],
                 logs / (game_id + "-configure.log"))
         command(["cmake", "--build", runtime, "--target", "CdiRuntime", "--parallel", args.jobs],

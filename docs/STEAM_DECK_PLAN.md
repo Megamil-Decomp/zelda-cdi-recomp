@@ -12,9 +12,9 @@ Avaliação em 2026-10-29; não houve execução em Deck/Proton nem build Linux 
 
 ## O que o código atual realmente oferece
 
-`runner/src/cdi_frontend.c` do staging aceito lê D-pad e botões A/B pela API SDL GameController, além de setas/WASD, Enter/Espaço/Z e X/Backspace. Abre e reconecta controles. **Não lê os eixos do analógico diretamente**: o perfil inicial pode remapear o stick para setas; suporte direto precisará de implementação e testes de deadzone/soltura.
+O patch 0010 acrescenta analógico esquerdo com deadzone e menu por Start ao frontend SDL, além de D-pad/A/B, setas/WASD, Enter/Espaço/Z e X/Backspace. A navegação e os eixos têm testes sintéticos; falta ensaio com controle físico e no Deck. O ZIP Windows anterior ainda usa o frontend antigo.
 
-O launcher Win32 tem navegação de teclado e mouse, sem leitura própria de gamepad. No runtime, movimento/cliques de mouse só entram com captura habilitada e foco; a configuração inicial usa `capture_mouse = false`. Assim, o trackpad como mouse é útil já no launcher, mas seu uso dentro do jogo exige habilitar/testar captura ou rever a separação entre captura e entrega de input. Não declarar suporte completo ao trackpad a partir de documentação genérica da SDL.
+O launcher Win32 tem navegação de teclado e mouse, sem leitura própria de gamepad. O patch 0010 separa entrega de mouse e captura: mouse livre com foco por padrão, captura opcional em F2. Movimento do cursor CD-i foi observado no Mac com o novo frontend; falta ensaio específico do trackpad/Proton. O launcher continua sendo um ponto pendente para navegação integral por controle.
 
 ## Perfil inicial proposto, ainda sem teste em hardware
 
@@ -23,8 +23,9 @@ O launcher Win32 tem navegação de teclado e mouse, sem leitura própria de gam
 | D-pad / stick esquerdo | Setas | Movimento e seleção de lista |
 | A | Enter | Ação/confirmar e botão padrão da interface |
 | B | Backspace | Botão secundário do CD-i |
-| Trackpad direito | Mouse | Navegação do launcher; jogo sujeito à captura |
-| R2 / L2 | Clique esquerdo / direito | Navegação por ponteiro, com a mesma ressalva |
+| Trackpad direito | Mouse | Navegação livre; captura opcional, ensaio Deck pendente |
+| R2 / L2 | Clique esquerdo / direito | Botões 1/2 do CD-i |
+| Start | Start ou F1 | Menu de opções do novo frontend |
 | Botão traseiro opcional | F11 | Alternar tela cheia do runtime |
 
 Aceitação: selecionar cada jogo, passar pelo player/menus, jogar um percurso conhecido, entrar/sair de inventário, fechar salvando e reabrir sem intervenção de teclado físico. Reproduzir as correções de fetch/IRQ e medir fallback no destino. Não usar processo vivo ou FPS isolado como aprovação. Nenhum perfil foi enviado ao Workshop; conteúdo/mídia comercial permanece privado.

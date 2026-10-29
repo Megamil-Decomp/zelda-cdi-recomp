@@ -1,5 +1,11 @@
 # Adaptações locais do runtime
 
+### 0010 — opções do player, pausa e mouse livre
+
+Integra os três headers autorais `cdi_player_ui*.h` ao SDL. F1/Start abre opções; o loop principal processa janela/sinais sem avançar CPU/dispositivos. Volume altera somente a cópia PCM de saída; preferências ficam em `frontend.cfg`. Mouse habilitado e captura são estados separados, com deltas de coordenadas lógicas quando livre; F2 alterna confinamento. Analógico esquerdo usa deadzone para direções. Abrir o menu descarta movimentos/cliques pendentes, e retomar espera controles neutros para evitar ações involuntárias.
+
+Aplicar apenas em staging privado após as adaptações anteriores; não editar o checkout upstream. O contexto permanece sob os termos auditados. Fonte bitmap do novo menu é autoral; nenhum recurso dos discos é incorporado. Plano e testes em `docs/PLAYER_MENU_PLAN.md`. Mac 0.1.7 é o primeiro pacote; o ZIP Windows anterior não recebe mudanças retroativamente.
+
 `0005-adventure-menu-text-pilot.patch` integra o adaptador autoral `app/native/cdi_text_mod.h`, copiado pela pipeline. Traduz somente um rótulo confirmado (`EMPTY`) nas rotinas de desenho e medição da fonte da revisão Adventure compilada, sem alterar bytes físicos ou lógica de saves. Exige configuração externa explícita; ausente, inválida ou desligada mantém o original. Pacote piloto e limites documentados em `docs/TEXT_PILOT_PLAN.md`.
 
 `0004-adventure-audio-reselection.patch` corrige a retomada do ADPCM quando o par de buffers esvazia e o driver repõe o mesmo buffer. Preserva o áudio ativo ao substituir um som; a próxima seleção ocorre após seu término e segue o buffer realmente entregue. Inclui regressão sintética que falha no runtime anterior. Não altera ROM, save, lógica do jogo ou o erro de leitura para forçar sucesso.

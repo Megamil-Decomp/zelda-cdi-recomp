@@ -1,5 +1,20 @@
 # Progresso
 
+## 2026-10-29 — menu durante o jogo, mouse livre e pacote Mac 0.1.7
+
+Implementado o plano `PLAYER_MENU_PLAN.md` nos três candidatos aceitos, preservando código gerado, BIOS e seeds. Patch 0010 e headers autorais acrescentam F1/Start, pausa, tela cheia, três tamanhos, volume, mouse, captura e mapa informativo de botões. Preferências ficam em `frontend.cfg`; abertura limpa cliques pendentes e retomada espera controles neutros. Analógico esquerdo com deadzone implementado; falta controle físico. O piloto PT-BR de Adventure permanece parcial e opcional; os novos textos do menu seguem português/inglês do launcher.
+
+**142 testes Python passaram**, incluindo estado, ganho PCM unitário/silêncio, deadzone, prefs e frontend SDL real com framebuffer/áudio sintéticos. A regressão inclui eventos absolutos com xrel/yrel zero, pausa sem consumo de áudio, isolamento/limpeza de cliques e seleção estável após movimento/resize. **11/11 CTest em cada um dos três novos builds passaram.** O frontend novo também compilou como objeto Windows x64 com MinGW/SDL2; não houve execução Windows nem ensaio com controle físico.
+
+Ensaio visual Mac com bateria copiada confirmou F1, volume 90%, tamanho médio, ida/volta de tela cheia, mapa e saída normal pelo menu (exit 0). Frame/instruções/fallback ficaram idênticos durante a pausa observada. Movimento do mouse livre deslocou o cursor CD-i de (640,176) para (704,218); confirmado novamente na revisão final. Saves pessoais permaneceram com o mesmo hash. Evidências em `data/private/player-ui/interactive-3/` e `interactive-4/`; falhas de consulta TCP após saída voluntária indicam processo já encerrado, não crash.
+
+Replay Adventure a 1x completou menu, save, percurso, inventário e retorno, sem erro de disco observado; 92,27% nativo no intervalo, incluindo BIOS. Esse replay usou a revisão imediatamente anterior ao descarte adicional de edges ao abrir o menu; a revisão final passou a regressão sintética e novo boot/interação. O harness daquele replay pediu captura de depuração ao final e precisou matar o processo pausado (-9); não contar essa saída como encerramento normal. As sessões visuais e os três boots finais encerraram com exit 0. Relatório em `data/private/rea-titles/player-ui-adventure-route1x/`; não certifica campanha nem áudio físico (saída dummy nos ensaios).
+
+SDL2 nativo 2.32.10 foi compilado de fonte oficial fixada, isolado, com mínimo macOS 13; substitui no novo bundle a combinação Homebrew SDL2-compat/SDL3 que exigia macOS 26. Os três executáveis empacotados chegaram ao shell/boot após Play, avançaram 1.800 frames sem hold inesperado, carregaram a dylib interna e encerraram normalmente, preservando baterias originais. Relatórios `data/private/player-ui/package-{faces,gamelon,adventure}/`. Bundle assinado/verificado, somente dependências internas/sistema; mínimo 13 nos runtimes, launcher e SDL.
+
+Promovido `dist/Zelda CD-i.app` 0.1.7 build 8, DMG e ZIP de teste; anterior preservado em `dist/previous-before-player-menu-20261029/`. Catálogo aceito atualizado, anterior em `data/private/player-ui/catalog-before-menu.json`. Novo completo privado: `dist/exports/player-menu-0.1.7/Zelda-CDi-Completo.zip` (474.125.587 bytes), mídia conferida e saves pessoais excluídos. Exportador continua sendo `python3 scripts/export_private_macos.py`; novas exportações Windows recompilam a partir do catálogo aceito, mas o ZIP Windows entregue anteriormente permanece intacto/antigo. Checkout upstream/core sem modificações versionadas; nenhum recurso privado foi adicionado ao Git.
+
+
 ## 2026-10-29 — auditoria para publicação do código e próximos passos Deck
 
 Usuário autorizou push dos ajustes, excluindo ROMs e versões completas. Revisados os três commits locais pendentes, contendo somente fontes autorais, patches, testes e documentação; caminhos privados e extensões de mídia/pacotes não estão versionados nesse conjunto. Não criar release/anexar ZIPs completos.

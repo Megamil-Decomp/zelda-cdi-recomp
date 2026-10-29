@@ -74,18 +74,24 @@ The native runtime uses **SDL2**, supporting keyboard, modern USB/Bluetooth cont
 | **Button 1 (Action / Attack / Jump)** | `Space`, `Enter`, or `Z` |
 | **Button 2 (Secondary Item / Cancel)** | `Backspace` or `X` |
 | **Toggle Fullscreen** | `F11` or `Alt + Enter` |
+| **Options / pause menu** | `F1` (on some Macs, `Fn + F1`) |
+| **Capture / release mouse** | `F2` |
 | **Quit Game** | `Cmd + Q` or `Cmd + ESC` |
 
 ### 🎮 Gamepad (Xbox, PlayStation, Switch Pro, generic USB controllers)
 | Action | Controller Mapping |
 | :--- | :--- |
-| **Movement** | D-Pad; left stick requires external remapping |
+| **Movement** | D-Pad or left stick (deadzone applied) |
+| **Options / pause menu** | `Start` |
 | **Button 1 (Attack / Confirm)** | Button `A` (Xbox) / `✕` (PlayStation) / `B` (Nintendo) |
 | **Button 2 (Secondary Item)** | Button `B` (Xbox) / `○` (PlayStation) / `A` (Nintendo) |
 
 ### 🖱️ Mouse
 - Mouse motion moves the on-screen CD-i cursor.
+- Mouse input is enabled inside the focused window even without capture. `F2` optionally confines the cursor. Motion is relative, so the computer and CD-i pointers need not share a position.
 - **Left click**: Button 1 (Action / Confirm).
+
+The in-game menu offers fullscreen, three window sizes, volume, mouse/capture toggles and an informational button map. Navigate with arrows and Enter, D-pad and A/B, or mouse clicks. `Esc` goes back; `F1`/`Start` resumes. Settings persist per title in `frontend.cfg`, alongside the existing player settings. Game execution and host audio pause while this menu is open. The new menu is included in Mac 0.1.7; the older Windows preview ZIP has not been updated or executed on Windows.
 
 ---
 

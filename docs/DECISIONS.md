@@ -1,5 +1,11 @@
 # Decisões
 
+## 2026-10-29 — menu de host e mouse independente de captura
+
+Atender primeiro o menu solicitado, comum aos três candidatos, sem tocar a lógica recompilada dos jogos. O retorno explícito de pausa do frontend impede avanço de CPU/dispositivos, mantém sinais/janela ativos e pausa a saída SDL. Volume atua no PCM copiado, com ganho unitário idêntico; fonte, rótulos e preferências são autorais. Esvaziar edges de mouse ao abrir e exigir controles neutros ao retomar. Manter a tradução externa parcial de Adventure.
+
+Usar SDK nativo SDL2 2.32.10 de fonte oficial fixada por SHA-256, compilado em diretório privado com alvo macOS 13. A biblioteca Homebrew SDL2-compat/SDL3 instalada exigia macOS 26, incompatível com o mínimo anunciado. Resolver imports @rpath antes de copiar dylibs e remover RPATHs absolutos do bundle; assinar e verificar o resultado. Não alterar a instalação global. Windows continua sem aceitação real, e o pacote anterior permanece preservado.
+
 ## 2026-10-29 — publicar somente fontes e planejar Deck por evidência
 
 Usuário autorizou push para o remoto existente, sem ROMs nem versão completa. Auditar os objetos/paths dos commits pendentes e enviar apenas código, testes e documentação; não anexar artefatos nem alterar privacidade do repositório. Para Steam Deck, propor primeiro ensaio Windows/Proton com Steam Input, mantendo explícitos os limites de analógico, mouse/captura e interface. Compatibilidade Deck exige teste próprio; consulta à documentação e inspeção local não são aprovação de hardware.

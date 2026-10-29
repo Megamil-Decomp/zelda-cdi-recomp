@@ -162,16 +162,24 @@ private struct L10n {
         case "controls.exit":
             return isPt ? "Sair para o Launcher:" : "Exit to Launcher:"
         case "controls.exit_desc":
-            return isPt ? "Tecla ESC" : "ESC key"
+            return isPt ? "Cmd + Q ou Cmd + Esc" : "Cmd + Q or Cmd + Esc"
         case "controls.fullscreen":
             return isPt ? "Alternar Tela Cheia:" : "Toggle Fullscreen:"
         case "controls.fullscreen_desc":
             return isPt ? "F11 ou Alt + Enter" : "F11 or Alt + Enter"
+        case "controls.options":
+            return isPt ? "Opções durante o jogo:" : "In-game options:"
+        case "controls.options_desc":
+            return "F1 / Start"
+        case "controls.capture":
+            return isPt ? "Prender / soltar cursor:" : "Capture / release cursor:"
+        case "controls.capture_desc":
+            return "F2"
 
         case "controls.gamepad":
             return isPt ? "Controle (Gamepad / Joystick)" : "Gamepad (Controller)"
         case "controls.gamepad_dpad":
-            return isPt ? "Direcional (D-Pad):" : "D-Pad:"
+            return isPt ? "D-Pad / analógico esquerdo:" : "D-Pad / left stick:"
         case "controls.gamepad_dpad_desc":
             return isPt ? "Movimentação do personagem / cursor" : "Character movement / cursor"
         case "controls.gamepad_a":
@@ -660,6 +668,8 @@ private final class ControlsWindowController: NSWindowController {
             (L10n.t("controls.btn1"), L10n.t("controls.btn1_desc")),
             (L10n.t("controls.btn2"), L10n.t("controls.btn2_desc")),
             (L10n.t("controls.fullscreen"), L10n.t("controls.fullscreen_desc")),
+            (L10n.t("controls.options"), L10n.t("controls.options_desc")),
+            (L10n.t("controls.capture"), L10n.t("controls.capture_desc")),
             (L10n.t("controls.exit"), L10n.t("controls.exit_desc"))
         ])
         scrollStack.addArrangedSubview(kbCard)
@@ -1449,6 +1459,7 @@ private final class LauncherDelegate: NSObject, NSApplicationDelegate, NSTableVi
             child.currentDirectoryURL = gameData
             var environment = ProcessInfo.processInfo.environment
             environment["CDI_PLAYER_CONFIG_PATH"] = gameData.appendingPathComponent("player.cfg").path
+            environment["CDI_UI_LANGUAGE"] = L10n.currentLanguage == .portuguese ? "pt-BR" : "en"
             // The GUI language controls presentation for the next game process.
             // Always clear inherited overrides so English reliably preserves originals.
             environment.removeValue(forKey: "CDI_TEXT_MOD_PATH")

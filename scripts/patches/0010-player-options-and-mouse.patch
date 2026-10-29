@@ -1,0 +1,271 @@
+--- a/runner/src/cdi_frontend.c
++++ b/runner/src/cdi_frontend.c
+@@ -8,6 +8,7 @@
+ #include "cdi_audio.h"
+ #include "mcd212_video.h"
+ #include "cdi_menu_mod.h"
++#include "cdi_player_ui_sdl.h"
+ 
+ #include <stdint.h>
+ #include <stdio.h>
+@@ -26,6 +27,9 @@
+     uint64_t next_event_ms;
+     int fullscreen;
+     int mouse_captured;
++    CdiPlayerUi ui;
++    int suppress_controls, menu_stick;
++    int mouse_x,mouse_y,mouse_position_valid,pointer_inside;
+ } Frontend;
+ 
+ static Frontend s;
+@@ -55,23 +59,20 @@
+ }
+ 
+ static int apply_mouse_capture(void) {
+-    int wanted = cdi_input_mouse_active();
+-    if (wanted == s.mouse_captured) return 1;
+-    if (wanted) {
+-        if (SDL_SetRelativeMouseMode(SDL_TRUE) != 0) {
+-            fprintf(stderr, "[frontend] cannot capture relative mouse: %s (ignoring to prevent unexpected quit)\n",
+-                    SDL_GetError());
+-            s.mouse_captured = 0;
+-            return 1;
+-        }
+-        SDL_SetWindowGrab(s.window, SDL_TRUE);
+-        SDL_ShowCursor(SDL_DISABLE);
+-    } else {
+-        SDL_SetWindowGrab(s.window, SDL_FALSE);
+-        SDL_SetRelativeMouseMode(SDL_FALSE);
+-        SDL_ShowCursor(SDL_ENABLE);
+-    }
+-    s.mouse_captured = wanted;
++    int wanted=s.ui.capture && cdi_input_mouse_active() && !s.ui.open;
++    if(wanted!=s.mouse_captured) {
++        s.mouse_position_valid=0;
++        if(wanted && SDL_SetRelativeMouseMode(SDL_TRUE)!=0) {
++            fprintf(stderr,"[frontend] cursor capture unavailable: %s; free mouse retained\n",SDL_GetError());
++            s.ui.capture=0;wanted=0;
++        }
++        if(!wanted)SDL_SetRelativeMouseMode(SDL_FALSE);
++        SDL_SetWindowGrab(s.window,wanted?SDL_TRUE:SDL_FALSE);
++        s.mouse_captured=wanted;
++    }
++    int hide=!s.ui.open && cdi_input_mouse_active() &&
++             (s.mouse_captured || s.pointer_inside);
++    SDL_ShowCursor(hide?SDL_DISABLE:SDL_ENABLE);
+     return 1;
+ }
+ 
+@@ -99,6 +100,10 @@
+             mask |= CDI_INPUT_BTN1;
+         if (SDL_GameControllerGetButton(s.controller, SDL_CONTROLLER_BUTTON_B))
+             mask |= CDI_INPUT_BTN2;
++        int x=cdi_ui_axis(SDL_GameControllerGetAxis(s.controller,SDL_CONTROLLER_AXIS_LEFTX));
++        int y=cdi_ui_axis(SDL_GameControllerGetAxis(s.controller,SDL_CONTROLLER_AXIS_LEFTY));
++        if(x<0)mask|=CDI_INPUT_LEFT; if(x>0)mask|=CDI_INPUT_RIGHT;
++        if(y<0)mask|=CDI_INPUT_UP; if(y>0)mask|=CDI_INPUT_DOWN;
+     }
+     return mask;
+ }
+@@ -163,7 +168,7 @@
+             double elapsed_s = (double)(now_ticks - s_fps_last_time) / 1000.0;
+             double current_fps = (double)s_fps_frame_count / elapsed_s;
+             char title_buf[128];
+-            snprintf(title_buf, sizeof(title_buf), "Zelda CD-i — %.1f FPS", current_fps);
++            snprintf(title_buf, sizeof(title_buf), "Zelda CD-i — %.1f FPS · F1: Menu", current_fps);
+             SDL_SetWindowTitle(s.window, title_buf);
+             fprintf(stderr, "[fps] %.1f FPS (frames=%u in %.2fs)\n", current_fps, s_fps_frame_count, elapsed_s);
+             fflush(stderr);
+@@ -183,13 +188,18 @@
+                     (sizeof(int16_t) * CDI_AUDIO_OUTPUT_CHANNELS);
+     if (queued_frames >= CDI_AUDIO_OUTPUT_RATE / 4u) return;
+     frames = cdi_audio_read_frames(pcm, 2048);
++    cdi_ui_audio(pcm,(size_t)frames*CDI_AUDIO_OUTPUT_CHANNELS,s.ui.volume);
+     if (frames && SDL_QueueAudio(s.audio_device, pcm,
+                                 frames * sizeof(int16_t) *
+                                 CDI_AUDIO_OUTPUT_CHANNELS) != 0)
+         fprintf(stderr, "[frontend] audio queue failed: %s\n", SDL_GetError());
+ }
+ 
++#include "cdi_player_ui_frontend.h"
++
+ int cdi_frontend_init(int capture_mouse) {
++    const char *language=getenv("CDI_UI_LANGUAGE");
++    cdi_ui_init(&s.ui,capture_mouse,language && !strncmp(language,"pt",2));
+     SDL_SetMainReady();
+     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
+     SDL_SetHint(SDL_HINT_RENDER_VSYNC, "0");
+@@ -197,6 +207,7 @@
+         fprintf(stderr, "[frontend] SDL initialization failed: %s\n", SDL_GetError());
+         return 0;
+     }
++    player_ui_preferences();
+     if (SDL_InitSubSystem(SDL_INIT_AUDIO) == 0) {
+         SDL_AudioSpec desired;
+         SDL_zero(desired);
+@@ -214,7 +225,7 @@
+         fprintf(stderr, "[frontend] audio subsystem unavailable: %s\n",
+                 SDL_GetError());
+     }
+-    s.window = SDL_CreateWindow("cdirecomp — Philips CD-i",
++    s.window = SDL_CreateWindow("Zelda CD-i — F1: Menu",
+                                 SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                                 768, 576, SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
+     if (!s.window) {
+@@ -242,7 +253,10 @@
+     s.controller_id = -1;
+     SDL_EventState(SDL_DROPFILE, SDL_ENABLE);
+     open_first_controller();
+-    cdi_input_mouse_configure(capture_mouse);
++    player_ui_resize();
++    if(s.ui.fullscreen)set_fullscreen(1);
++    s.ui.fullscreen=s.fullscreen;
++    cdi_input_mouse_configure(s.ui.mouse);
+     cdi_input_mouse_focus(
+         (SDL_GetWindowFlags(s.window) & SDL_WINDOW_INPUT_FOCUS) != 0);
+     if (!apply_mouse_capture()) {
+@@ -254,51 +268,53 @@
+ }
+ 
+ int cdi_frontend_pump(void) {
+-    uint64_t now = SDL_GetTicks64();
+-    if (now >= s.next_event_ms) {
+-        SDL_Event event;
+-        s.next_event_ms = now + 4;
+-        while (SDL_PollEvent(&event)) {
+-            if (event.type == SDL_QUIT) return 0;
+-            if (event.type == SDL_WINDOWEVENT &&
+-                (event.window.event == SDL_WINDOWEVENT_FOCUS_GAINED ||
+-                 event.window.event == SDL_WINDOWEVENT_FOCUS_LOST)) {
+-                cdi_input_mouse_focus(
+-                    event.window.event == SDL_WINDOWEVENT_FOCUS_GAINED);
++    uint64_t now=SDL_GetTicks64();
++    if(now>=s.next_event_ms) {
++        SDL_Event event;s.next_event_ms=now+4;
++        while(SDL_PollEvent(&event)) {
++            if(s.ui.open) {if(!player_ui_apply(player_ui_event(&event)))return 0;continue;}
++            if(event.type==SDL_QUIT)return 0;
++            if((event.type==SDL_KEYDOWN && !event.key.repeat && event.key.keysym.scancode==SDL_SCANCODE_F1) ||
++               (event.type==SDL_CONTROLLERBUTTONDOWN && event.cbutton.which==s.controller_id && event.cbutton.button==SDL_CONTROLLER_BUTTON_START)) {
++                player_ui_open();continue;
++            }
++            if(event.type==SDL_WINDOWEVENT) {
++                if(event.window.event==SDL_WINDOWEVENT_FOCUS_LOST) {
++                    cdi_input_mouse_focus(0);s.suppress_controls=1;cdi_input_set_frontend(0);player_ui_input_state();
++                }else if(event.window.event==SDL_WINDOWEVENT_FOCUS_GAINED)cdi_input_mouse_focus(1);
++                if(event.window.event==SDL_WINDOWEVENT_ENTER)s.pointer_inside=1;
++                if(event.window.event==SDL_WINDOWEVENT_LEAVE || event.window.event==SDL_WINDOWEVENT_FOCUS_LOST) {
++                    s.pointer_inside=0;s.mouse_position_valid=0;
++                }
+                 apply_mouse_capture();
+-            } else if (event.type == SDL_MOUSEMOTION) {
+-                cdi_input_mouse_motion(event.motion.xrel, event.motion.yrel);
+-            } else if (event.type == SDL_MOUSEBUTTONDOWN ||
+-                       event.type == SDL_MOUSEBUTTONUP) {
+-                int button = event.button.button == SDL_BUTTON_LEFT ? 1 :
+-                             event.button.button == SDL_BUTTON_RIGHT ? 2 : 0;
+-                cdi_input_mouse_button(
+-                    button, event.type == SDL_MOUSEBUTTONDOWN);
+-            } else if (event.type == SDL_KEYDOWN && !event.key.repeat) {
+-                if ((event.key.keysym.mod & (KMOD_GUI | KMOD_ALT)) &&
+-                    (event.key.keysym.scancode == SDL_SCANCODE_ESCAPE ||
+-                     event.key.keysym.scancode == SDL_SCANCODE_Q))
+-                    return 0;
+-                if (event.key.keysym.scancode == SDL_SCANCODE_F11 ||
+-                    (event.key.keysym.scancode == SDL_SCANCODE_RETURN &&
+-                     (event.key.keysym.mod & KMOD_ALT)))
+-                    set_fullscreen(!s.fullscreen);
+-            } else if (event.type == SDL_CONTROLLERDEVICEADDED) {
+-                open_first_controller();
+-            } else if (event.type == SDL_CONTROLLERDEVICEREMOVED &&
+-                       event.cdevice.which == s.controller_id) {
+-                close_controller();
+-                open_first_controller();
+-            } else if (event.type == SDL_DROPFILE) {
+-                if (cdi_media_mount(event.drop.file))
+-                    SDL_SetWindowTitle(s.window, "cdirecomp — Philips CD-i — disc inserted");
++            }else if(event.type==SDL_MOUSEMOTION)player_mouse_motion(&event.motion);
++            else if(event.type==SDL_MOUSEBUTTONDOWN || event.type==SDL_MOUSEBUTTONUP) {
++                int button=event.button.button==SDL_BUTTON_LEFT?1:event.button.button==SDL_BUTTON_RIGHT?2:0;
++                cdi_input_mouse_button(button,event.type==SDL_MOUSEBUTTONDOWN);
++            }else if(event.type==SDL_KEYDOWN && !event.key.repeat) {
++                SDL_Scancode key=event.key.keysym.scancode;
++                if((event.key.keysym.mod&(KMOD_GUI|KMOD_ALT)) && (key==SDL_SCANCODE_ESCAPE || key==SDL_SCANCODE_Q))return 0;
++                if(key==SDL_SCANCODE_F2) {s.ui.capture=!s.ui.capture;player_ui_apply(CDI_UI_DIRTY|CDI_UI_MOUSE);}
++                if(key==SDL_SCANCODE_F11 || (key==SDL_SCANCODE_RETURN && (event.key.keysym.mod&KMOD_ALT))) {
++                    s.suppress_controls=1;player_ui_input_state();s.ui.fullscreen=!s.ui.fullscreen;
++                    player_ui_apply(CDI_UI_DIRTY|CDI_UI_FULLSCREEN);
++                }
++            }else if(event.type==SDL_CONTROLLERDEVICEADDED)open_first_controller();
++            else if(event.type==SDL_CONTROLLERDEVICEREMOVED && event.cdevice.which==s.controller_id) {close_controller();open_first_controller();}
++            else if(event.type==SDL_DROPFILE) {
++                if(cdi_media_mount(event.drop.file))SDL_SetWindowTitle(s.window,"Zelda CD-i — disc inserted");
+                 SDL_free(event.drop.file);
+             }
+         }
+-        cdi_input_set_frontend(input_mask());
+-    }
+-    pump_audio();
+-    return present_frame();
++    }
++    if(s.ui.open) {player_ui_render();SDL_Delay(16);return 2;}
++    if(s.suppress_controls) {
++        if(input_mask()==0 && !(SDL_GetMouseState(NULL,NULL)&(SDL_BUTTON_LMASK|SDL_BUTTON_RMASK))) {
++            s.suppress_controls=0;player_ui_input_state();
++        }
++        cdi_input_set_frontend(0);
++    }else cdi_input_set_frontend(input_mask());
++    pump_audio();return present_frame();
+ }
+ 
+ void cdi_frontend_shutdown(void) {
+--- a/runner/src/main.c
++++ b/runner/src/main.c
+@@ -400,11 +400,14 @@
+ 
+         for (;;) {
+             uint32_t target;
+-            if (g_player_shutdown_requested ||
+-                (frontend_active && !cdi_frontend_pump())) {
++            int frontend_state=g_player_shutdown_requested?0:
++                (frontend_active?cdi_frontend_pump():1);
++            if (!frontend_state) {
+                 player_quit = 1;
+                 break;
+             }
++            /* Host options pause CPU/devices, while servicing UI and signals. */
++            if (frontend_state==2) continue;
+             if (g_redirect_pending) {
+                 g_redirect_pending = 0;
+                 target = g_redirect_addr;
+--- a/runner/include/cdi_frontend.h
++++ b/runner/include/cdi_frontend.h
+@@ -3,5 +3,5 @@
+ #pragma once
+ 
+ int  cdi_frontend_init(int capture_mouse);
+-int  cdi_frontend_pump(void); /* zero after the player requests shutdown */
++int  cdi_frontend_pump(void); /* 0: quit, 1: run guest, 2: host menu pauses guest */
+ void cdi_frontend_shutdown(void);
+--- a/runner/src/cdi_input.c
++++ b/runner/src/cdi_input.c
+@@ -161,3 +161,11 @@
+     if (read != write)
+         atomic_store_explicit(&mouse_button_read, read + 1, memory_order_release);
+ }
++
++/* Discard host mouse edges when entering the host pause menu. */
++void cdi_input_discard_mouse(void) {
++    atomic_store_explicit(&mouse_physical_buttons, 0, memory_order_release);
++    unsigned write = atomic_load_explicit(&mouse_button_write, memory_order_acquire);
++    atomic_store_explicit(&mouse_button_read, write, memory_order_release);
++    cdi_input_clear_relative();
++}
+--- a/runner/include/cdi_input.h
++++ b/runner/include/cdi_input.h
+@@ -3,3 +3,5 @@
+ /* Physical SDL keys/controller and developer playback are independent
+  * producers. An idle frontend must not release another producer's button. */
+ void cdi_input_set_frontend(uint32_t mask);
++
++void cdi_input_discard_mouse(void);

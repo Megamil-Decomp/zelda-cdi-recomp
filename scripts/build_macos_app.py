@@ -87,6 +87,30 @@ def add_rpath(binary, path):
         run(["install_name_tool", "-add_rpath", path, binary], capture_output=True)
 
 
+def rpaths(binary):
+    output = run(["otool", "-l", binary], capture_output=True, text=True).stdout
+    return re.findall(r"cmd LC_RPATH\s+cmdsize \d+\s+path (.*?) \(offset", output)
+
+
+def library_source(dependency, binary, executable_directory):
+    def expand(value):
+        if value.startswith("@loader_path/"):
+            return binary.parent / value[len("@loader_path/"):]
+        if value == "@loader_path":
+            return binary.parent
+        if value.startswith("@executable_path/"):
+            return executable_directory / value[len("@executable_path/"):]
+        if value == "@executable_path":
+            return executable_directory
+        return Path(value)
+    candidates = ([expand(p) / dependency[len("@rpath/"):] for p in rpaths(binary)]
+                  if dependency.startswith("@rpath/") else [expand(dependency)])
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate.resolve()
+    raise RuntimeError("Missing dynamic library: " + dependency)
+
+
 def bundle_libraries(executables, frameworks):
     """Copy non-system dylibs recursively and rewrite load commands.
 
@@ -98,15 +122,15 @@ def bundle_libraries(executables, frameworks):
     while queue:
         binary = queue.pop(0)
         for dependency in dependencies(binary):
-            if system_library(dependency) or dependency.startswith("@"):
+            if system_library(dependency):
                 continue
-            source = Path(dependency)
-            if not source.is_file():
-                raise RuntimeError("Missing dynamic library: " + dependency)
+            source = library_source(dependency, binary, executables[0].parent)
             if not dependency.endswith(".dylib"):
                 raise RuntimeError("Unsupported non-system dependency: " + dependency)
             name = source.name
             destination = frameworks / name
+            if source == destination.resolve():
+                continue  # A copied dylib's own install-name entry.
             identity = source.resolve()
             if name in copied and copied[name] != identity:
                 raise RuntimeError("Different libraries have the same name: " + name)
@@ -121,7 +145,7 @@ def bundle_libraries(executables, frameworks):
         if binary in executables:
             add_rpath(binary, "@executable_path/../Frameworks")
 
-    if any(name.startswith("libSDL2") for name in copied):
+    if any(name.startswith("libSDL2") and "sdl2-compat" in str(path) for name, path in copied.items()):
         source = Path("/opt/homebrew/opt/sdl3/lib/libSDL3.0.dylib")
         if not source.is_file():
             raise RuntimeError("sdl2-compat requires the local SDL3 library")
@@ -134,8 +158,12 @@ def bundle_libraries(executables, frameworks):
                 raise RuntimeError("Unexpected SDL3 dependency: " + dependency)
 
     for binary in [*executables, *frameworks.glob("*.dylib")]:
+        for path in rpaths(binary):
+            if not path.startswith("@"):
+                run(["install_name_tool", "-delete_rpath", path, binary], capture_output=True)
         remaining = [item for item in dependencies(binary)
-                     if not system_library(item) and not item.startswith("@")]
+                     if not system_library(item) and not
+                     (item.startswith("@rpath/") and (frameworks / item[len("@rpath/"):]).is_file())]
         if remaining:
             raise RuntimeError("Unbundled dependencies: " + repr(remaining))
 
@@ -222,10 +250,16 @@ def main():
         (ROOT / "upstream-cdirecomp/LICENSE", "cdirecomp-LICENSE.txt"),
         (ROOT / "upstream-cdirecomp/external/m68k-recomp-core/LICENSE", "m68k-recomp-core-LICENSE.txt"),
         (ROOT / "upstream-cdirecomp/THIRD-PARTY-NOTICES.md", "upstream-THIRD-PARTY-NOTICES.md"),
-        (Path("/opt/homebrew/opt/sdl2-compat/LICENSE.txt"), "sdl2-compat-LICENSE.txt"),
-        (Path("/opt/homebrew/opt/sdl3/LICENSE.txt"), "SDL3-LICENSE.txt"),
     ):
         shutil.copy2(source, licenses / name)
+    native_sdl_license = ROOT / "build/player-ui/sdl2/SDL2-2.32.10/LICENSE.txt"
+    if (frameworks / "libSDL3.dylib").is_file():
+        for path, name in (("sdl2-compat", "sdl2-compat-LICENSE.txt"), ("sdl3", "SDL3-LICENSE.txt")):
+            shutil.copy2(Path("/opt/homebrew/opt") / path / "LICENSE.txt", licenses / name)
+    elif native_sdl_license.is_file():
+        shutil.copy2(native_sdl_license, licenses / "SDL2-native-LICENSE.txt")
+    else:
+        raise RuntimeError("Missing native SDL2 license")
     (resources / "LEIA-ME.txt").write_text(
         "Zelda CD-i — build privada experimental para Mac Apple Silicon.\n\n"
         "Abra o app, selecione o jogo, a BIOS e seu arquivo CUE (ou BIN com CUE parceiro).\n"
@@ -254,8 +288,8 @@ def main():
     info = {"CFBundleDevelopmentRegion": "pt_BR", "CFBundleDisplayName": "Zelda CD-i",
             "CFBundleExecutable": "ZeldaCDi", "CFBundleIdentifier": "local.zeldacdi.player",
             "CFBundleInfoDictionaryVersion": "6.0", "CFBundleName": "Zelda CD-i",
-            "CFBundlePackageType": "APPL", "CFBundleShortVersionString": "0.1.6" if candidates else "0.1.4" if args.menu_mod else "0.1.3" if args.text_mod else "0.1.1",
-            "CFBundleVersion": "7" if candidates else "5" if args.menu_mod else "4" if args.text_mod else "2", "LSMinimumSystemVersion": "13.0",
+            "CFBundlePackageType": "APPL", "CFBundleShortVersionString": "0.1.7" if candidates else "0.1.4" if args.menu_mod else "0.1.3" if args.text_mod else "0.1.1",
+            "CFBundleVersion": "8" if candidates else "5" if args.menu_mod else "4" if args.text_mod else "2", "LSMinimumSystemVersion": "13.0",
             "CFBundleIconFile": "AppIcon",
             "NSHighResolutionCapable": True, "NSHumanReadableCopyright": "Private local research build"}
     with (contents / "Info.plist").open("wb") as stream:

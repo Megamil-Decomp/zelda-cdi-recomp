@@ -126,6 +126,7 @@ static DWORD WINAPI start_worker(void *unused) {
         fputs("[input]\ncapture_mouse = false\n", f); fclose(f);
     }
     SetEnvironmentVariableW(L"CDI_PLAYER_CONFIG_PATH", config);
+    SetEnvironmentVariableW(L"CDI_UI_LANGUAGE", L"pt-BR");
     SetEnvironmentVariableW(L"CDI_TEXT_MOD_PATH", NULL);
     SetEnvironmentVariableW(L"CDI_MENU_MOD_PATH", NULL);
     if (use_mod && wcscmp(g->id, L"adventure") == 0) {

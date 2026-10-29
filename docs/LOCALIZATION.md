@@ -1,4 +1,26 @@
-# Localização PT-BR — proposta, sem implementação
+# Localização PT-BR — investigação e piloto parcial
+
+Automação de descoberta/exportação e validação já disponível: [TEXT_PIPELINE.md](TEXT_PIPELINE.md). O catálogo contém candidatos que precisam de confirmação. O piloto de fonte aplica `EMPTY` → `VAZIO` nos slots vazios de Zelda’s Adventure; veja [TEXT_PILOT_PLAN.md](TEXT_PILOT_PLAN.md). O pacote 0.1.4 acrescenta cinco botões por composição provisória no host, documentada em [MENU_OVERLAY_PLAN.md](MENU_OVERLAY_PLAN.md). Faces of Evil e Wand of Gamelon não foram traduzidos.
+
+## Investigação local de Zelda's Adventure — 2026-10-14
+
+Inspeção somente leitura do disco Europe fornecido, usando o enumerador de arquivos do frontend auditado. A listagem inclui `cdi_zelda`, `zelda.mapres`, `zelda.rtf`, `zelda_rl.rtf`, `zelda_audio.rtf`, `zelda_voice.rtf`, `over.rtf` e `under.rtf`. Nenhum dos arquivos `.rtf` começa com o cabeçalho de um documento Rich Text comum; não tratá-los como documentos de texto editáveis. Nomes de arquivos sugerem categorias de recursos, mas não comprovam seu conteúdo completo ou formato.
+
+No arquivo executável de 133.120 bytes foram encontrados literais ASCII como `EMPTY` e `Zelda Saves`, além de nomes de arquivos e outros candidatos ruidosos. Isso demonstra acesso a alguns textos, não a um catálogo completo. O arquivo `zelda.mapres` tem 1.374 bytes; sua semântica ainda não foi decodificada.
+
+Uma busca literal ASCII nos payloads dos 23.749 setores Form 1 encontrou `Zelda Saves` uma vez e `EMPTY` duas vezes. Não encontrou as expressões de erro `Your Disc`, `Please Remove` ou `Press Any`, nem os termos amostrados Gaspra, Hyrule, SWORD, SHIELD, INVENTORY, CREATE e DELETE. Ausência nessa busca não prova que uma mensagem seja imagem: pode estar em outro formato, codificação, compressão, recurso Form 2 ou montagem dinâmica. A concatenação de payloads também exige confirmar a continuidade física de qualquer candidato.
+
+Inventário e candidatos detalhados permanecem privados em `data/private/localization/`. A investigação inicial não modificou mídia ou runtime. O piloto posterior altera somente a apresentação desse rótulo no runtime; disco, BIOS, bytes originais em RAM e saves são preservados.
+
+### Caminho recomendado a partir da evidência
+
+1. Localizar a rotina que apresenta um literal conhecido e mapear fonte, codificação e limites; demonstrar uma substituição visual autoral pequena antes de automatizar extração.
+2. Classificar rótulos de menus e mensagens: strings desenhadas por fonte versus palavras embutidas em imagens. Para bitmaps, mapear decodificação, posição e substituição somente daquele recurso.
+3. Correlacionar `zelda_voice.rtf` e as falas efetivamente reproduzidas com eventos identificáveis; planejar legendas externas sincronizadas pelo tempo convidado, mantendo áudio original.
+4. Criar catálogo externo de IDs/textos/traduções e adaptadores por revisão. UTF-8 no mod exige renderizador/fonte que suportem acentos; não significa que a fonte original já os aceite.
+5. Validar acentos, tamanho em pixels, quebra de linha, opção de desligar e ausência de mudanças no comportamento original. Planejamento dos outros dois jogos requer inventário próprio.
+
+Complexidade preliminar: textos acessíveis por fonte, média; palavras em imagens, média a alta; legendas completas de falas/cinematics, alta; localização integral, alta. O volume real de conteúdo e os codecs ainda precisam ser mapeados. O primeiro marco útil é um único rótulo do jogo traduzido e uma fala legendada, com mod desligável; não uma tradução completa imediata.
 
 Estado em 12/10/2026: requisito futuro. Não foram traduzidos textos nem extraídos, substituídos ou publicados recursos comerciais. A prioridade é validar a execução original de Faces of Evil.
 

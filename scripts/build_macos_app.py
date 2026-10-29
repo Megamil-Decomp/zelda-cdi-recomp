@@ -26,6 +26,39 @@ GAMES = (
 )
 
 
+def load_runtime_catalog(path, root=ROOT):
+    """Select all three private candidates by content, never by a stale path."""
+    root = root.resolve()
+    path = Path(path)
+    if path.stat().st_size > 1024 * 1024:
+        raise ValueError("Runtime catalog exceeds the finite size limit")
+    document = json.loads(path.read_text())
+    if not isinstance(document, dict) or document.get("schema_version") != 1:
+        raise ValueError("Unsupported runtime catalog schema")
+    entries = document.get("runtimes")
+    if not isinstance(entries, dict) or set(entries) != {game[0] for game in GAMES}:
+        raise ValueError("Runtime catalog must select exactly faces, gamelon and adventure")
+    result = {}
+    for game_id, entry in entries.items():
+        if not isinstance(entry, dict) or not isinstance(entry.get("path"), str):
+            raise ValueError("Invalid runtime catalog entry")
+        source = Path(entry["path"])
+        source = (root / source).resolve() if not source.is_absolute() else source.resolve()
+        if not any(source.is_relative_to(root / folder)
+                   for folder in ("build", "dist", "data/private")):
+            raise ValueError("Runtime candidate must stay in this project's private directories")
+        digest = entry.get("sha256")
+        if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest):
+            raise ValueError("Runtime catalog requires a complete SHA-256")
+        if not source.is_file() or sha256(source) != digest:
+            raise ValueError("Runtime candidate identity changed: " + game_id)
+        label = entry.get("status_text", "Em teste")
+        if not isinstance(label, str) or not label.strip() or len(label) > 100 or any(ord(c) < 32 for c in label):
+            raise ValueError("Invalid runtime status text")
+        result[game_id] = {"path": source, "sha256": digest, "status_text": label}
+    return result
+
+
 def run(argv, **kwargs):
     return subprocess.run([str(item) for item in argv], check=True, **kwargs)
 
@@ -111,10 +144,15 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=ROOT / "dist")
     parser.add_argument("--no-dmg", action="store_true")
+    parser.add_argument("--runtime-catalog", type=Path,
+                        help="private JSON selecting all three runtime paths and SHA-256 identities")
+    parser.add_argument("--menu-mod", type=Path, help="optional Adventure host menu compositor profile")
+    parser.add_argument("--text-mod", type=Path, help="optional Adventure menu pilot configuration")
     parser.add_argument("--no-local-paths", action="store_true", help="do not prefill paths to this workspace")
     args = parser.parse_args()
     if sys.platform != "darwin":
         parser.error("packaging requires macOS")
+    candidates = load_runtime_catalog(args.runtime_catalog) if args.runtime_catalog else {}
     output = args.output.resolve()
     private_locations = [ROOT / "dist", ROOT / "build", ROOT / "data/private"]
     if not any(output == path or path in output.parents for path in private_locations):
@@ -130,6 +168,12 @@ def main():
     macos, resources, frameworks = (contents / name for name in ("MacOS", "Resources", "Frameworks"))
     for directory in (macos, resources, frameworks):
         directory.mkdir(parents=True, exist_ok=True)
+    if args.text_mod:
+        shutil.copy2(args.text_mod, resources / "adventure-ptbr.txt")
+    if args.menu_mod:
+        if not args.text_mod:
+            parser.error("--menu-mod requires --text-mod")
+        shutil.copy2(args.menu_mod, resources / "adventure-menu-ptbr.txt")
 
     run(["swiftc", "-O", "-swift-version", "5", "-target", "arm64-apple-macosx13.0",
          "-module-cache-path", work / "module-cache", "-framework", "AppKit",
@@ -149,15 +193,20 @@ def main():
 
     executables = []
     for game_id, title, folder, stem in GAMES:
-        runtime = ROOT / "build/native" / ("runtime-" + game_id) / "CdiRuntime"
+        candidate = candidates.get(game_id)
+        runtime = candidate["path"] if candidate else ROOT / "build/native" / ("runtime-" + game_id) / "CdiRuntime"
         cue = Path("roms") / folder / (stem + ".cue")
         image = ROOT / "roms" / folder / (stem + ".bin")
         entry = {"id": game_id, "title": title, "runtime": "CdiRuntime-" + game_id,
                  "disc_sha256": sha256(image), "status": "experimental",
                  "status_text": "Em teste", "local_cue_relative": cue.as_posix()}
+        if candidate:
+            entry.update(status_text=candidate["status_text"], source_runtime_sha256=candidate["sha256"])
         if runtime.is_file():
             destination = macos / entry["runtime"]
             shutil.copy2(runtime, destination)
+            if candidate and sha256(destination) != candidate["sha256"]:
+                raise RuntimeError("Runtime candidate changed while packaging: " + game_id)
             destination.chmod(0o755)
             executables.append(destination)
         else:
@@ -205,8 +254,8 @@ def main():
     info = {"CFBundleDevelopmentRegion": "pt_BR", "CFBundleDisplayName": "Zelda CD-i",
             "CFBundleExecutable": "ZeldaCDi", "CFBundleIdentifier": "local.zeldacdi.player",
             "CFBundleInfoDictionaryVersion": "6.0", "CFBundleName": "Zelda CD-i",
-            "CFBundlePackageType": "APPL", "CFBundleShortVersionString": "0.1.0",
-            "CFBundleVersion": "1", "LSMinimumSystemVersion": "13.0",
+            "CFBundlePackageType": "APPL", "CFBundleShortVersionString": "0.1.6" if candidates else "0.1.4" if args.menu_mod else "0.1.3" if args.text_mod else "0.1.1",
+            "CFBundleVersion": "7" if candidates else "5" if args.menu_mod else "4" if args.text_mod else "2", "LSMinimumSystemVersion": "13.0",
             "CFBundleIconFile": "AppIcon",
             "NSHighResolutionCapable": True, "NSHumanReadableCopyright": "Private local research build"}
     with (contents / "Info.plist").open("wb") as stream:
@@ -247,6 +296,6 @@ def main():
 if __name__ == "__main__":
     try:
         raise SystemExit(main())
-    except (OSError, RuntimeError, subprocess.CalledProcessError) as exc:
+    except (OSError, ValueError, RuntimeError, subprocess.CalledProcessError) as exc:
         print("Packaging failed: " + str(exc), file=sys.stderr)
         raise SystemExit(1)

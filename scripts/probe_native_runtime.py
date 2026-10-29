@@ -10,6 +10,7 @@ import argparse
 import json
 import os
 from pathlib import Path
+import re
 import socket
 import struct
 import subprocess
@@ -131,9 +132,10 @@ class Probe:
                 "guest_read_observed": any(event.get("type") == 5 and
                                            event.get("channel") == 0 for event in events)}
 
-    def screenshot(self) -> dict:
+    def pause_stable(self) -> dict:
+        """Park the runtime before reading evidence that spans many requests."""
         acknowledgement = self.request("pause")
-        if not acknowledgement.get("ok"):
+        if acknowledgement.get("ok") is not True:
             raise RuntimeError("pause request rejected")
         deadline = time.monotonic() + 5.0
         last = None
@@ -141,14 +143,104 @@ class Probe:
         while time.monotonic() < deadline:
             state = self.request("status")
             blocks = state.get("blocks")
+            if type(blocks) is not int or blocks < 0:
+                raise RuntimeError("runtime returned an invalid execution counter")
             now = time.monotonic()
             if blocks != last:
                 last, stable_since = blocks, now
             elif stable_since is not None and now - stable_since > 0.15 and state.get("held"):
-                break
+                return state
             time.sleep(0.02)
-        else:
-            raise RuntimeError("runtime did not park for a consistent screenshot")
+        raise RuntimeError("runtime did not park for consistent evidence")
+
+    def module_targets(self, page_size: int = 128, max_targets: int = 262144,
+                       timeout: float = 30.0) -> dict:
+        """Read the whole target ledger, explicitly marking partial evidence.
+
+        The server defaults to just 64 records and reports ledger overflow, not
+        response truncation, in ``dropped``. Neither count alone proves a complete
+        capture. Keep the guest parked and verify metadata again after paging.
+        """
+        if (type(page_size) is not int or not 1 <= page_size <= 256 or
+                type(max_targets) is not int or not 0 <= max_targets <= 262144 or
+                not 0 < timeout <= 60):
+            raise ValueError("invalid finite module-target collection limits")
+        result = {"ok": False, "complete": False, "total": None, "dropped": None,
+                  "captured": 0, "pages": 0, "targets": [], "errors": []}
+        seen = set()
+        identities = {}
+        deadline = time.monotonic() + timeout
+
+        def number(value, field, maximum=0xFFFFFFFFFFFFFFFF):
+            if type(value) is not int or not 0 <= value <= maximum:
+                raise RuntimeError(f"invalid module-target {field}")
+            return value
+
+        def page(start, count):
+            if time.monotonic() >= deadline:
+                raise RuntimeError("module-target collection deadline expired")
+            reply = self.request("module_targets", **{"from": start, "count": count})
+            result["pages"] += 1
+            if reply.get("ok") is not True:
+                raise RuntimeError("module-target page was rejected")
+            total = number(reply.get("total"), "total", 0xFFFFFFFF)
+            dropped = number(reply.get("dropped"), "dropped")
+            if result["total"] is None:
+                result["total"], result["dropped"] = total, dropped
+            elif total != result["total"] or dropped != result["dropped"]:
+                raise RuntimeError("module-target ledger changed during collection")
+            rows = reply.get("targets")
+            if not isinstance(rows, list) or len(rows) != min(count, max(0, total - start)):
+                raise RuntimeError("truncated or malformed module-target page")
+            return rows
+
+        try:
+            parked = self.pause_stable()
+            rows = page(0, 0)
+            if result["total"] > max_targets:
+                raise RuntimeError("module-target ledger exceeds collection limit")
+            while len(result["targets"]) < result["total"]:
+                start = len(result["targets"])
+                rows = page(start, min(page_size, result["total"] - start))
+                for row in rows:
+                    if not isinstance(row, dict):
+                        raise RuntimeError("malformed module-target record")
+                    module = number(row.get("module"), "module", 0xFFFFFFFE)
+                    offset = number(row.get("offset"), "offset", 0xFFFFFFFF)
+                    base = number(row.get("base"), "base", 0xFFFFFFFF)
+                    if (offset & 1) or (base & 1) or base + offset > 0xFFFFFFFF:
+                        raise RuntimeError("unaligned or overflowing module-target address")
+                    for key in ("epoch", "frame", "trace_seq", "hits"):
+                        value = number(row.get(key), key)
+                        if key in ("epoch", "hits") and value == 0:
+                            raise RuntimeError(f"invalid module-target {key}")
+                    digest = row.get("sha256")
+                    if not isinstance(digest, str) or re.fullmatch(r"[0-9a-fA-F]{64}", digest) is None:
+                        raise RuntimeError("invalid module-target identity")
+                    digest = digest.lower()
+                    if module in identities and identities[module] != digest:
+                        raise RuntimeError("module-target identity changed for module index")
+                    identities[module] = digest
+                    key = (digest, offset)
+                    if key in seen:
+                        raise RuntimeError("duplicate or aliased module-target record")
+                    seen.add(key)
+                    result["targets"].append(row)
+            page(result["total"], 0)
+            final = self.request("status")
+            if not final.get("held") or final.get("blocks") != parked["blocks"]:
+                raise RuntimeError("runtime moved during module-target collection")
+            result["ok"] = True
+            result["complete"] = result["dropped"] == 0
+            if result["dropped"]:
+                result["errors"].append("runtime module-target ledger overflowed")
+        except (OSError, ValueError, RuntimeError, KeyError) as exc:
+            result["errors"].append(str(exc))
+        result["captured"] = len(result["targets"])
+        return result
+
+    def screenshot(self) -> dict:
+        self.pause_stable()
         info = self.request("video_frame")
         width, height = int(info["width"]), int(info["height"])
         if not (0 < width <= 4096 and 0 < height <= 4096):
@@ -183,12 +275,53 @@ class Probe:
 
 
 def coverage(snapshot: dict) -> dict:
-    report = snapshot.get("interp_report", {})
-    native, interpreted = report.get("native", 0), report.get("total", 0)
+    """Keep missing/failed counter reads distinct from measured zero execution."""
+    result = {"valid": False, "native_instructions": None,
+              "interpreted_instructions": None, "native_percent": None,
+              "includes_bios": True, "dropped": None}
+    report = snapshot.get("interp_report") if isinstance(snapshot, dict) else None
+    if not isinstance(report, dict) or report.get("ok") is not True:
+        detail = report.get("error") if isinstance(report, dict) else None
+        result["error"] = "instruction counter reply unavailable or rejected" + (f": {detail}" if detail else "")
+        return result
+    for field in ("native", "total", "dropped"):
+        value = report.get(field)
+        if type(value) is not int or not 0 <= value <= 0xFFFFFFFFFFFFFFFF:
+            result["error"] = f"invalid instruction counter: {field}"
+            return result
+    native, interpreted = report["native"], report["total"]
     count = native + interpreted
-    return {"native_instructions": native, "interpreted_instructions": interpreted,
+    return {"valid": True, "native_instructions": native,
+            "interpreted_instructions": interpreted,
             "native_percent": 100.0 * native / count if count else None,
-            "includes_bios": True, "dropped": report.get("dropped")}
+            "includes_bios": True, "dropped": report["dropped"]}
+
+
+def coverage_interval(before: dict, after: dict) -> dict:
+    """Compute a ratio only from two valid, monotonic counter observations."""
+    result = {"valid": False, "native_instructions": None,
+              "interpreted_instructions": None, "native_percent": None,
+              "includes_bios": True}
+    for label, endpoint in (("before", before), ("after", after)):
+        if not isinstance(endpoint, dict) or endpoint.get("valid") is not True:
+            detail = endpoint.get("error") if isinstance(endpoint, dict) else None
+            result["error"] = f"invalid {label} coverage observation" + (f": {detail}" if detail else "")
+            return result
+        for field in ("native_instructions", "interpreted_instructions"):
+            value = endpoint.get(field)
+            if type(value) is not int or not 0 <= value <= 0xFFFFFFFFFFFFFFFF:
+                result["error"] = f"invalid {label} instruction counter: {field}"
+                return result
+    native = after["native_instructions"] - before["native_instructions"]
+    interpreted = after["interpreted_instructions"] - before["interpreted_instructions"]
+    if native < 0 or interpreted < 0:
+        result["error"] = "instruction counters decreased or reset during observation"
+        return result
+    count = native + interpreted
+    return {"valid": True, "native_instructions": native,
+            "interpreted_instructions": interpreted,
+            "native_percent": 100.0 * native / count if count else None,
+            "includes_bios": True}
 
 
 def main() -> int:
@@ -274,13 +407,14 @@ def main() -> int:
         finally:
             if probe.process is not None:
                 if probe.process.poll() is None:
-                    report["after"] = probe.snapshot()
-                    report["coverage_after"] = coverage(report["after"])
                     try:
                         report["screenshot"] = probe.screenshot()
                     except (OSError, ValueError, RuntimeError, KeyError) as exc:
                         report["screenshot_error"] = str(exc)
-                    for cmd in ("ikat_events", "native_events", "module_targets", "dispatch_miss_info"):
+                    report["module_targets"] = probe.module_targets()
+                    report["after"] = probe.snapshot()
+                    report["coverage_after"] = coverage(report["after"])
+                    for cmd in ("ikat_events", "native_events", "dispatch_miss_info"):
                         try:
                             report[cmd] = probe.request(cmd)
                         except (OSError, ValueError, RuntimeError) as exc:
@@ -293,13 +427,8 @@ def main() -> int:
                         probe.process.wait(3.0)
                 report["process_returncode"] = probe.process.returncode
             if "coverage_before" in report and "coverage_after" in report:
-                before, after = report["coverage_before"], report["coverage_after"]
-                native = after["native_instructions"] - before["native_instructions"]
-                interpreted = after["interpreted_instructions"] - before["interpreted_instructions"]
-                report["coverage_interval"] = {
-                    "native_instructions": native, "interpreted_instructions": interpreted,
-                    "native_percent": 100 * native / (native + interpreted) if native + interpreted else None,
-                    "includes_bios": True}
+                report["coverage_interval"] = coverage_interval(
+                    report["coverage_before"], report["coverage_after"])
             (output / "report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({key: report.get(key) for key in
                       ("procedure_completed", "gameplay_accepted", "error", "runtime_held", "coverage_interval")}))

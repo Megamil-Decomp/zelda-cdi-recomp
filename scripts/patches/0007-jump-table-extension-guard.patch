@@ -1,0 +1,18 @@
+--- a/external/m68k-recomp-core/profiles/scc68070/code_generator.c
++++ b/external/m68k-recomp-core/profiles/scc68070/code_generator.c
+@@ -1371,6 +1371,15 @@
+     int8_t   d8   = (int8_t)(ext & 0xFF);
+     uint32_t base = (uint32_t)(jmp_instr->addr + 2 + (int32_t)d8);
+     if (!rom || base + 1 >= rom->rom_size) return;
++
++    /* A PC-indexed JMP can use its own extension word as its arithmetic
++     * base. That word is part of the instruction, not a proven first table
++     * row. In particular, a zero extension would invent a zero-offset code
++     * entry in the middle of this JMP and then decode the real table as code.
++     * Keep the existing computed-target fallback; independently discovered
++     * code entries remain eligible for native dispatch. */
++    if (base >= jmp_instr->addr &&
++        base - jmp_instr->addr < jmp_instr->byte_length) return;
+ 
+     /* Duff's-device probe runs FIRST without function-range bounds. The
+      * 8+ uniform-opcode threshold is self-bounding, and the dispatched

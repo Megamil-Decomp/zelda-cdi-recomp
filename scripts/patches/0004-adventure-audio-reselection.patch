@@ -1,0 +1,104 @@
+--- a/runner/src/cdic.c
++++ b/runner/src/cdic.c
+@@ -320,6 +320,10 @@
+ }
+ 
+ static void start_audio_buffer(void) {
++    /* A replacement may reselect a buffer only after the current one has
++     * finished. Changing audio_buffer while active would release the wrong
++     * ownership bit and move the live AP pointer into another buffer. */
++    if (!ciap.audio_playing || ciap.audio_active) return;
+     unsigned buffer = ciap.audio_buffer;
+     if (ciap.audio_select_pending && (read_word(CIAP_BMAN) & 3u)) {
+         if (!(read_word(CIAP_BMAN) & (1u << buffer))) buffer ^= 1u;
+@@ -327,7 +331,7 @@
+         ciap.audio_select_pending = 0;
+     }
+     uint16_t bit = (uint16_t)(1u << buffer);
+-    if (!ciap.audio_playing || ciap.audio_active || !(read_word(CIAP_BMAN) & bit))
++    if (!(read_word(CIAP_BMAN) & bit))
+         return;
+     uint16_t format = ciap.audio_format[buffer];
+     uint8_t coding = (uint8_t)(((format & 0x2000u) ? 0x10u : 0u) |
+@@ -436,13 +440,16 @@
+             /* PLAY0 starts the buffer consumer. It is not an immediate
+              * completion: the ROM refills through the PCL buffer interrupt. */
+             ciap.audio_playing = 1;
+-            /* Plain PLAY0 is also used to replace a sound while the record
+-             * engine runs ($429C98). Keep an active buffer's progress; when
+-             * idle, the first handed-off buffer starts the new consumer. */
++            /* Plain PLAY0 replaces a sound while the record engine runs
++             * ($429C98). Preserve the active buffer's progress, but retain
++             * reselection until its replacement is handed off. The ROM can
++             * withdraw the other queued buffer and refill buffer 0 after
++             * both become free; strict old-sound alternation would strand
++             * that handoff and the later FINISH completion. */
+             if (value == 0x0140u) {
+                 ciap.audio_buffer = 0;
+                 ciap.audio_select_pending = 0;
+-            } else if (!ciap.audio_active) ciap.audio_select_pending = 1;
++            } else ciap.audio_select_pending = 1;
+             ciap.audio_finish_requested = 0;
+             start_audio_buffer();
+         }
+@@ -772,6 +779,10 @@
+         ciap.audio_remaining_ns = 0;
+         ciap.audio_buffer ^= 1u;
+         store_word(CIAP_AP_POINTER, (uint16_t)(ciap.audio_buffer * 0x480u));
++        /* With an empty pair, the PCL driver can refill either buffer (it
++         * selects buffer 0 when both are free). Resume from that actual
++         * handoff instead of waiting forever for the old alternation. */
++        if (!(read_word(CIAP_BMAN) & 3u)) ciap.audio_select_pending = 1;
+         /* Bit 1 wakes the PCL refill path ($429E0C). Bit 13 is a different
+          * condition: it makes that handler probe/acknowledge the ADPCM pair
+          * and take its error path when neither buffer is owned ($429EFE).
+--- a/runner/tests/cdic_test.c
++++ b/runner/tests/cdic_test.c
+@@ -444,6 +444,47 @@
+     cdic_increment_time(54000000.0);
+     CHECK(cdic_read(CDI_CDIC_BASE + 0x2594, 2) == 0);
+ 
++    /* Replacing a sound can withdraw the queued other buffer. Once the
++     * active buffer drains, CD-RTOS may refill buffer 0 even though the old
++     * sound would have consumed buffer 1 next. PLAY0 must retain that new
++     * selection until a real handoff arrives, while preserving the active
++     * buffer's pointer and duration. A stranded handoff also strands FINISH. */
++    cdic_write(CDI_CDIC_BASE + 0x25A6, 0x0006, 2);
++    cdic_write(CDI_CDIC_BASE + 0x259A, 0x0800, 2);
++    cdic_write(CDI_CDIC_BASE + 0x2594, 3, 2);
++    cdic_write(CDI_CDIC_BASE + 0x25A6, 0x0140, 2);
++    cdic_increment_time(20000000.0);
++    audio_pointer = cdic_read(CDI_CDIC_BASE + 0x25B4, 2);
++    cdic_write(CDI_CDIC_BASE + 0x25A6, 0x0040, 2);
++    cdic_write(CDI_CDIC_BASE + 0x2594, 2, 2); /* withdraw queued buffer 1 */
++    CHECK(cdic_read(CDI_CDIC_BASE + 0x25B4, 2) == audio_pointer);
++    cdic_increment_time(34000000.0);
++    CHECK(cdic_read(CDI_CDIC_BASE + 0x2594, 2) == 0);
++    CHECK(cdic_read(CDI_CDIC_BASE + 0x2586, 2) == 2);
++    audio_decodes = 0;
++    cdic_write(CDI_CDIC_BASE + 0x2594, 1, 2); /* replacement starts in buffer 0 */
++    CHECK(audio_decodes == 1);
++    CHECK(cdic_read(CDI_CDIC_BASE + 0x25B4, 2) == 0);
++    CHECK((cdic_read(CDI_CDIC_BASE + 0x25AA, 2) & 0x0040) != 0);
++    /* A second refill after starvation can select buffer 0 again, without
++     * another PLAY0. The real PCL driver chooses the first free buffer. */
++    cdic_increment_time(54000000.0);
++    CHECK(cdic_read(CDI_CDIC_BASE + 0x2594, 2) == 0);
++    CHECK(cdic_read(CDI_CDIC_BASE + 0x2586, 2) == 2);
++    cdic_write(CDI_CDIC_BASE + 0x2594, 1, 2);
++    CHECK(audio_decodes == 2);
++    CHECK(cdic_read(CDI_CDIC_BASE + 0x25B4, 2) == 0);
++    cdic_write(CDI_CDIC_BASE + 0x25A6, 0x0020, 2);
++    cdic_increment_time(25000.0);
++    CHECK((cdic_read(CDI_CDIC_BASE + 0x25AA, 2) & 0x0080) == 0);
++    cdic_increment_time(54000000.0);
++    CHECK(cdic_read(CDI_CDIC_BASE + 0x2594, 2) == 0);
++    CHECK(cdic_read(CDI_CDIC_BASE + 0x2586, 2) == 2);
++    cdic_increment_time(25000.0);
++    CHECK(cdic_read(CDI_CDIC_BASE + 0x2586, 2) == 8);
++    CHECK((cdic_read(CDI_CDIC_BASE + 0x25AA, 2) & 0x0080) != 0);
++    cdic_write(CDI_CDIC_BASE + 0x25A6, 0x0200, 2);
++
+     if (failures) return 1;
+     puts("CIAP channel-selection and AP command tests passed");
+     return 0;

@@ -1,0 +1,13 @@
+--- a/runner/src/runtime.c
++++ b/runner/src/runtime.c
+@@ -561,6 +561,10 @@ void recomp_take_irq(void) {
+     if (!onchip && !vec) vec = (uint8_t)(24 + lvl);
+     if (!onchip) s_irq_external_vector[lvl] = 0;
+     build_exception_frame(vec);
++    /* SCC68070 interrupt acknowledge raises the active IPL and suppresses
++     * tracing. The frame above must retain the pre-interrupt SR for RTE. */
++    m68k_set_sr((uint16_t)((g_cpu.SR & ~(0x0700u | SR_T)) |
++                          ((uint16_t)lvl << 8)));
+     /* Defer the 65-cycle autovector cost into the first ISR instruction. */
+     runtime_defer_exception_cycles(65);
+     s_pending_fallback_reason = FB_EXCEPTION;   /* the ISR runs in the interpreter next */

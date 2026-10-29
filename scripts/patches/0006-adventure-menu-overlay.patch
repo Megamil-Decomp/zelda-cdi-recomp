@@ -1,0 +1,29 @@
+--- a/runner/src/cdi_frontend.c
++++ b/runner/src/cdi_frontend.c
+@@ -7,6 +7,7 @@
+ #include "cdi_media.h"
+ #include "cdi_audio.h"
+ #include "mcd212_video.h"
++#include "cdi_menu_mod.h"
+ 
+ #include <stdint.h>
+ #include <stdio.h>
+@@ -127,6 +128,18 @@
+     if (count > MCD212_VIDEO_MAX_WIDTH * MCD212_VIDEO_MAX_HEIGHT) return 0;
+     mcd212_video_copy_frame(s.pixels, MCD212_VIDEO_MAX_WIDTH * MCD212_VIDEO_MAX_HEIGHT,
+                             &width, &height, &generation);
++    static CdiMenuMod menu_mod;
++    static int menu_loaded=0, menu_seen=0;
++    if(!menu_loaded) {
++        menu_loaded=1;
++        if(!cdi_menu_load(&menu_mod,getenv("CDI_MENU_MOD_PATH")))
++            fprintf(stderr,"[menu-mod] invalid profile; original retained\n");
++    }
++    int menu_matches=cdi_menu_apply(&menu_mod,s.pixels,width,height);
++    if(menu_matches && !menu_seen) {
++        menu_seen=1;
++        fprintf(stderr,"[menu-mod] confirmed menu; Portuguese labels composed\n");
++    }
+     if (SDL_UpdateTexture(s.texture, NULL, s.pixels, (int)width * 4) != 0) {
+         fprintf(stderr, "[frontend] texture update failed: %s\n", SDL_GetError());
+         return 0;

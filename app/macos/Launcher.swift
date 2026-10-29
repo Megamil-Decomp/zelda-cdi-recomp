@@ -17,8 +17,8 @@ private enum AppLanguage: String, CaseIterable {
 
     var flagTitle: String {
         switch self {
-        case .english: return "🇺🇸 English"
-        case .portuguese: return "🇧🇷 Português"
+        case .english: return "🇺🇸 English / Original"
+        case .portuguese: return "🇧🇷 Português (Brasil) — parcial"
         }
     }
 }
@@ -47,8 +47,8 @@ private struct L10n {
         case "app.library_title":
             return isPt ? "SEUS JOGOS" : "YOUR GAMES"
         case "app.note":
-            return isPt ? "Use seus arquivos originais. O aplicativo não copia os discos e verifica a revisão antes de iniciar." :
-                          "Use your original game files. The app does not bundle discs or firmware and checks file revisions before launching."
+            return isPt ? "PT-BR parcial: slots vazios e botões do menu de Adventure. Reinicie o jogo para aplicar o idioma." :
+                          "Partial PT-BR: empty slots and Adventure menu buttons. Restart the game to apply the language."
 
         // Media fields
         case "media.bios_title":
@@ -200,8 +200,8 @@ private struct L10n {
         case "dialog.about_title":
             return isPt ? "Zelda CD-i · versão experimental" : "Zelda CD-i · Experimental Port"
         case "dialog.about_text":
-            return isPt ? "Port nativo experimental para Mac Apple Silicon.\n\nForneça seus próprios arquivos de BIOS e imagens CUE/BIN originais. Textos e áudio originais são preservados.\n\nCódigo 100% de código aberto sob licença MIT." :
-                          "Experimental native port for Apple Silicon Mac.\n\nProvide your original BIOS and CUE/BIN disc images. Original game audio and texts are preserved.\n\n100% Open Source under the MIT license."
+            return isPt ? "Port nativo experimental para Mac Apple Silicon.\n\nForneça seus próprios arquivos de BIOS e imagens CUE/BIN originais. Textos e áudio originais são preservados.\n\nOs componentes têm licenças próprias, incluídas no aplicativo. O runtime contém termos não comerciais." :
+                          "Experimental native port for Apple Silicon Mac.\n\nProvide your original BIOS and CUE/BIN disc images. Original game audio and texts are preserved.\n\nComponents have their own licenses, included in the app. The runtime includes noncommercial terms."
         case "dialog.quit_title":
             return isPt ? "Encerrar o jogo e sair?" : "Quit and stop game?"
         case "dialog.quit_text":
@@ -940,7 +940,8 @@ private final class LauncherDelegate: NSObject, NSApplicationDelegate, NSTableVi
         window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 920, height: 580),
                           styleMask: [.titled, .closable, .miniaturizable, .resizable],
                           backing: .buffered, defer: false)
-        window.title = "Zelda CD-i"
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev"
+        window.title = "Zelda CD-i — \(version)"
         window.minSize = NSSize(width: 820, height: 530)
         window.center()
         window.delegate = self
@@ -992,6 +993,7 @@ private final class LauncherDelegate: NSObject, NSApplicationDelegate, NSTableVi
         if let idx = AppLanguage.allCases.firstIndex(of: L10n.currentLanguage) {
             languageSelector.selectItem(at: idx)
         }
+        languageSelector.toolTip = "Idioma da interface e do próximo jogo. Tradução parcial: slots vazios e botões do menu de Adventure. Reinicie o jogo após mudar. / Interface and next game language; restart the game to apply."
         languageSelector.target = self
         languageSelector.action = #selector(languageSelected(_:))
         langStack.addArrangedSubview(languageSelector)
@@ -1198,6 +1200,9 @@ private final class LauncherDelegate: NSObject, NSApplicationDelegate, NSTableVi
         // 1. Pasta pai onde o .app reside (para pacotes zip e instalações portáteis)
         let bundleFolder = Bundle.main.bundleURL.deletingLastPathComponent().standardizedFileURL
         var candidateRoots = [bundleFolder]
+        if let resources = Bundle.main.resourceURL {
+            candidateRoots.insert(resources.appendingPathComponent("LocalMedia", isDirectory: true), at: 0)
+        }
 
         // 2. Se houver rootPath configurado no manifesto, adiciona como fallback
         if let rootPath = manifest.localMediaRoot {
@@ -1444,6 +1449,21 @@ private final class LauncherDelegate: NSObject, NSApplicationDelegate, NSTableVi
             child.currentDirectoryURL = gameData
             var environment = ProcessInfo.processInfo.environment
             environment["CDI_PLAYER_CONFIG_PATH"] = gameData.appendingPathComponent("player.cfg").path
+            // The GUI language controls presentation for the next game process.
+            // Always clear inherited overrides so English reliably preserves originals.
+            environment.removeValue(forKey: "CDI_TEXT_MOD_PATH")
+            environment.removeValue(forKey: "CDI_MENU_MOD_PATH")
+            if L10n.currentLanguage == .portuguese, game.id == "adventure",
+               let resources = Bundle.main.resourceURL {
+                let bundledMod = resources.appendingPathComponent("adventure-ptbr.txt")
+                if fileManager.fileExists(atPath: bundledMod.path) {
+                    environment["CDI_TEXT_MOD_PATH"] = bundledMod.path
+                    let menuMod = resources.appendingPathComponent("adventure-menu-ptbr.txt")
+                    if fileManager.fileExists(atPath: menuMod.path) {
+                        environment["CDI_MENU_MOD_PATH"] = menuMod.path
+                    }
+                }
+            }
             child.environment = environment
             child.standardOutput = handle
             child.standardError = handle

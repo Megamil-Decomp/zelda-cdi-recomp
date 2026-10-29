@@ -87,6 +87,23 @@ def main():
     command(["patch", "-p1", "-i", perf_patch], logs / "performance-patch.log", cwd=source)
     stability_patch = ROOT / "scripts/patches/0003-stability-and-adventure-cd-fix.patch"
     command(["patch", "-p1", "-i", stability_patch], logs / "stability-patch.log", cwd=source)
+    audio_patch = ROOT / "scripts/patches/0004-adventure-audio-reselection.patch"
+    command(["patch", "-p1", "-i", audio_patch], logs / "audio-reselection-patch.log", cwd=source)
+    shutil.copy2(ROOT / "app/native/cdi_text_mod.h", source / "runner/include/cdi_text_mod.h")
+    text_patch = ROOT / "scripts/patches/0005-adventure-menu-text-pilot.patch"
+    command(["patch", "-p1", "-i", text_patch], logs / "text-pilot-patch.log", cwd=source)
+    shutil.copy2(ROOT / "app/native/cdi_menu_mod.h", source / "runner/include/cdi_menu_mod.h")
+    command(["patch", "-p1", "-i", ROOT / "scripts/patches/0006-adventure-menu-overlay.patch"],
+            logs / "menu-overlay-patch.log", cwd=source)
+    command(["patch", "--batch", "-p1", "-i",
+             ROOT / "scripts/patches/0007-jump-table-extension-guard.patch"],
+            logs / "jump-table-guard-patch.log", cwd=source)
+    command(["patch", "--batch", "-p1", "-i",
+             ROOT / "scripts/patches/0008-interpreter-decode-window.patch"],
+            logs / "interpreter-decode-window-patch.log", cwd=source)
+    command(["patch", "--batch", "-p1", "-i",
+             ROOT / "scripts/patches/0009-interrupt-priority-on-ack.patch"],
+            logs / "interrupt-priority-patch.log", cwd=source)
     canonical = inputs / "cdi490a.be.rom"
     bios_info = normalize_bios(ROOT / "bios/cdi490a.rom", canonical)
     (inputs / "bios-info.json").write_text(json.dumps(bios_info, indent=2) + "\n")

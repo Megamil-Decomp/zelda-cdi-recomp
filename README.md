@@ -2,7 +2,7 @@
 
 [![Platform](https://img.shields.io/badge/platform-macOS%20Apple%20Silicon-blue.svg)](https://apple.com)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-playable%20at%2060%20FPS-brightgreen.svg)](#current-project-status)
+[![Status](https://img.shields.io/badge/status-experimental-orange.svg)](#current-project-status)
 [![Languages](https://img.shields.io/badge/i18n-English%20%7C%20Portugu%C3%AAs-purple.svg)](#launcher-interface)
 
 *English* | [*Português do Brasil*](README.pt-BR.md)
@@ -12,7 +12,7 @@ Native static recompilation (AOT) and standalone game player for the classic Phi
 - **Zelda: The Wand of Gamelon** (1993)
 - **Zelda's Adventure** (1996)
 
-Instead of traditional software emulation, this project recompiles the original Motorola/Philips SCC68070 machine code (CD-RTOS / OS-9) ahead-of-time directly into native **ARM64 (Apple Silicon)** machine code. This eliminates the high emulation overhead, delivers locked **60 FPS** gameplay with smooth audio pacing, and establishes a clean foundation for future **Windows** and **Linux** ports.
+This project statically recompiles original Motorola/Philips SCC68070 machine code (CD-RTOS / OS-9) into native **ARM64 (Apple Silicon)** code, with measured interpreter fallback for uncovered paths. macOS is the first target; **Windows** and **Linux** remain future ports.
 
 ---
 
@@ -30,12 +30,14 @@ Instead of traditional software emulation, this project recompiles the original 
 
 ## 🎮 Current Project Status
 
-- **Locked 60 FPS**: Native execution pipeline running at 60 FPS on Apple Silicon with hardware vsync decoupler and dedicated QoS priority.
-- **Link: The Faces of Evil**: Full boot, interactive gameplay menus, cinematic audio and stage progression.
-- **Zelda: The Wand of Gamelon**: Full boot, interactive gameplay menus, stage selection and in-game exploration.
-- **Zelda's Adventure**: Full boot with Gaspra FMV intro, cutscene scroll, overworld exploration, and seamless screen transitions (IKAT Channel-C disc query support).
+- **Execution**: Static recompilation with measured interpreter fallback; short acceptance scenarios do not certify a complete campaign.
+- **Link: The Faces of Evil**: Menu and first-area segments tested, including combat and return to the map; fetch and interrupt fixes in the local candidate.
+- **Zelda: The Wand of Gamelon**: Local REA-assisted candidate with additional static entries and a map/Sakado-area observation.
+- **Zelda's Adventure**: Private build **0.1.6** with REA-assisted static entries for the game and BIOS video routines. The additional paired route measured 89.19% → 92.20% native instructions, including BIOS; the candidate passed a 1x test with transitions, damage/return and inventory. Interpreter fallback remains; complete-game compatibility is unverified. See [results and limits](docs/PROGRESS.md).
 - **Native macOS Launcher**: Modern Swift/AppKit desktop application with bilingual support (**English** & **Portuguese (Brazil)**), automated SHA-256 media validation, and standalone `.app` / `.dmg` bundling.
 - **Stability & Crash Prevention**: Protected against accidental quits on focus switching or mouse capture changes.
+
+To create a complete private copy for another Apple Silicon Mac: `python3 scripts/export_private_macos.py`. The ZIP includes local media and stays outside Git. See [private export](docs/PRIVATE_EXPORT.md) and [platform portability](docs/PORTABILITY.md).
 
 ---
 

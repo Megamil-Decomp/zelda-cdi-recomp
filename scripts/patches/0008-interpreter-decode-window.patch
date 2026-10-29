@@ -1,0 +1,122 @@
+--- a/runner/src/m68k_interp.c
++++ b/runner/src/m68k_interp.c
+@@ -85,42 +85,51 @@
+ static int s_illegal_ea = 0;
+ 
+ /* =========================================================================
+- * Instruction fetch — CD-i diverges from the Genesis here. On the Genesis all
+- * missed code lives in ROM, so a flat g_rom view suffices. On CD-i the whole
+- * point of the floor is RAM-resident code: CD-RTOS builds vector stubs and
+- * relocates modules into RAM, so a missed PC can be anywhere the bus decodes
+- * (RAM $000000.. or ROM $400000..). We therefore fetch the decode window from
+- * the BUS (m68k_read8) into a small buffer and present it to the shared decoder
+- * as a GenesisRom whose backing is offset so rom_read*(view, A) returns the
+- * window byte for absolute address A. The decoder needs the REAL address (it
+- * computes Bcc/BSR targets as addr + disp), so the view must answer for the
+- * absolute PC, not a normalised offset.
++ * Instruction decode window. Speculative decoder bytes must never be fetched
++ * through MMIO: a read can acknowledge an interrupt or hit a write-only register.
++ * Copy only the contiguous RAM/ROM span containing PC. The shared decoder may
++ * inspect a larger window, but a decoded instruction is admitted only when all
++ * of its bytes are present. Unfetchable PCs/truncated instructions halt loudly;
++ * real instruction operand accesses still use the bus and its exception unwind.
+  * ========================================================================= */
+-#define BUSWIN 64                     /* >= max 68000 instruction length (10 B) */
+-static uint8_t    s_win[BUSWIN];
++#define BUSWIN 64
++static uint8_t s_win[BUSWIN];
+ static GenesisRom s_busview;
++extern uint8_t g_ram0[CDI_RAM0_SIZE], g_ram1[CDI_RAM1_SIZE], g_rom[CDI_ROM_SIZE];
+ 
+ static const GenesisRom *busview(uint32_t pc) {
++    const uint8_t *source;
++    uint32_t available;
+     pc &= 0xFFFFFFu;
+-    for (int i = 0; i < BUSWIN; i++)
+-        s_win[i] = m68k_read8((pc + (uint32_t)i) & 0xFFFFFFu);
+-    /* Base-offset so (rom_data)[A] == s_win[A-pc] for A in [pc, pc+BUSWIN).
+-     * Forming s_win-pc is the standard window-view idiom; only ever indexed in
+-     * that range, which maps back into s_win. */
++    if (pc < CDI_RAM0_SIZE) {
++        source = g_ram0 + pc;
++        available = CDI_RAM0_SIZE - pc;
++    } else if (pc >= CDI_RAM1_BASE && pc - CDI_RAM1_BASE < CDI_RAM1_SIZE) {
++        source = g_ram1 + (pc - CDI_RAM1_BASE);
++        available = CDI_RAM1_SIZE - (pc - CDI_RAM1_BASE);
++    } else if (pc >= CDI_ROM_BASE && pc < CDI_MCD212_BASE) {
++        source = g_rom + (pc - CDI_ROM_BASE);
++        available = CDI_MCD212_BASE - pc;
++    } else {
++        return NULL;
++    }
++    if (available < 2) return NULL;
++    if (available > BUSWIN) available = BUSWIN;
++    memcpy(s_win, source, available);
++    /* The shared flat-address decoder indexes only [pc, pc + available). */
+     s_busview.rom_data = s_win - pc;
+-    s_busview.rom_size = pc + BUSWIN;
++    s_busview.rom_size = pc + available;
+     return &s_busview;
+ }
+ 
+ int m68k_interp_decode_at(uint32_t pc, M68KInstr *out) {
+-    /* busview() fetches its window through m68k_read8, which updates
+-     * g_last_access_addr. The recomp-tier bus-error path calls this AFTER the
+-     * faulting access set g_last_access_addr (the TPF) but BEFORE building the
+-     * frame, so preserve it across the decode. */
+-    uint32_t saved = g_last_access_addr;
+-    int ok = m68k_decode(busview(pc), pc & 0xFFFFFFu, out);
+-    g_last_access_addr = saved;
+-    return ok ? out->byte_length : 0;
++    pc &= 0xFFFFFFu;
++    if (pc & 1u) return 0;
++    const GenesisRom *view = busview(pc);
++    if (!view || !m68k_decode(view, pc, out)) return 0;
++    /* rom_read* returns fill beyond its bound: never accept an instruction
++     * whose required extension bytes were not present in real RAM/ROM. */
++    return out->byte_length <= view->rom_size - pc ? (int)out->byte_length : 0;
+ }
+ 
+ /* =========================================================================
+@@ -1326,9 +1335,18 @@
+     debug_trace_interp(pc);
+ 
+     M68KInstr ins;
+-    if (!m68k_decode(busview(pc), pc, &ins)) {   /* fetch from the CD-i bus (RAM or ROM) */
+-        g_m68ki_bad_pc = pc; g_m68ki_bad_op = m68k_read16(pc);
++    const GenesisRom *view = busview(pc);
++    if (!view) {
++        g_m68ki_bad_pc = pc; g_m68ki_bad_op = 0;
++        return M68KI_HALT_BADADDR;
++    }
++    if (!m68k_decode(view, pc, &ins)) {
++        g_m68ki_bad_pc = pc; g_m68ki_bad_op = rom_read16(view, pc);
+         return M68KI_HALT_UNIMPL;
++    }
++    if (ins.byte_length > view->rom_size - pc) {
++        g_m68ki_bad_pc = pc; g_m68ki_bad_op = ins.words[0];
++        return M68KI_HALT_BADADDR;
+     }
+     /* Cost the instruction at ENTRY state — a few costs (register shift counts,
+      * DBcc condition, RTE frame format) read registers/flags/stack that exec_one
+--- a/runner/include/m68k_interp.h
++++ b/runner/include/m68k_interp.h
+@@ -80,13 +80,11 @@
+ int m68k_cycles(const M68KInstr *ins);
+ 
+ /*
+- * Decode the instruction at `pc` from the live CD-i bus into `*out`, reusing the
+- * recompiler's decoder (parity-by-construction with the static emitter). Returns
+- * the instruction's byte_length (>0) on success, or 0 if undecodable. The bus
+- * window is fetched through m68k_read8, which would perturb g_last_access_addr
+- * (the bus-error TPF source); this helper saves and restores it, so the call is
+- * side-effect-free w.r.t. the fault frame. Used by the recompiled-tier bus-error
+- * path to compute the post-fetch PC and faulting opcode for the vector-2 frame.
++ * Decode the instruction at `pc` from live RAM/ROM into `*out`, reusing the
++ * recompiler's decoder. Returns byte_length (>0) on success, or 0 for an
++ * undecodable/unfetchable instruction, including missing extension bytes.
++ * Speculative window bytes never read MMIO or change g_last_access_addr. Used
++ * by the recompiled-tier bus-error path to recover post-fetch PC and opcode.
+  */
+ int m68k_interp_decode_at(uint32_t pc, M68KInstr *out);
+ 

@@ -1,0 +1,62 @@
+--- a/runner/src/cdi_bus.c
++++ b/runner/src/cdi_bus.c
+@@ -94,7 +94,7 @@
+ uint8_t m68k_read8(uint32_t addr) {
+     g_last_access_addr = addr;
+     uint8_t *p = ram_ptr(addr);
+-    if (p) return *p;
++    if (p) return cdi_native_text_byte(addr, *p);
+     switch (classify(addr)) {
+         case RGN_ROM:    return g_rom[addr - CDI_ROM_BASE];
+         case RGN_MCD212: return (uint8_t)mcd212_read(addr, 1);
+--- a/runner/src/cdi_native.c
++++ b/runner/src/cdi_native.c
+@@ -6,6 +6,7 @@
+ #include "cdi_runtime.h"
+ #include "cdi_sha256.h"
+ #include "debug_server.h"
++#include "cdi_text_mod.h"
+ #include <stdlib.h>
+ #include <string.h>
+ 
+@@ -203,3 +204,31 @@
+     while (from<target_count && count<capacity) out[count++]=targets[from++];
+     return count;
+ }
++
++uint8_t cdi_native_text_byte(uint32_t address, uint8_t original) {
++    static CdiTextMod mod;
++    if (!mod.loaded) {
++        if (!cdi_text_mod_load(&mod, getenv("CDI_TEXT_MOD_PATH")))
++            fprintf(stderr,"[text-mod] invalid pilot configuration; original text retained\n");
++        else if (mod.enabled) fprintf(stderr,"[text-mod] Adventure menu pilot enabled\n");
++    }
++    if (!mod.enabled) return original;
++    for (uint32_t i=0;i<binding_count;i++) {
++        const Binding *b=&bindings[i];
++        if (!b->valid || b->size!=125566u || strcmp(b->module->name,"cdi_zelda") ||
++            g_cpu.PC<b->base) continue;
++        uint32_t offset=g_cpu.PC-b->base;
++        /* Verified glyph-draw and text-width reads for the bound revision.
++         * File/save comparisons and OS-9 copies do not pass this gate. */
++        if (offset!=0x75eau && offset!=0x7656u) continue;
++        uint64_t before=mod.hits;
++        uint8_t result=original;
++        if (address<CDI_RAM0_SIZE)
++            result=cdi_text_mod_byte(&mod,g_ram0,CDI_RAM0_SIZE,address,original);
++        else if (address>=CDI_RAM1_BASE && address-CDI_RAM1_BASE<CDI_RAM1_SIZE)
++            result=cdi_text_mod_byte(&mod,g_ram1,CDI_RAM1_SIZE,address-CDI_RAM1_BASE,original);
++        if (!before && mod.hits) fprintf(stderr,"[text-mod] translated confirmed menu label\n");
++        return result;
++    }
++    return original;
++}
+--- a/runner/include/cdi_native.h
++++ b/runner/include/cdi_native.h
+@@ -46,3 +46,6 @@
+ void cdi_native_record_target(uint32_t address);
+ int cdi_native_targets(CdiNativeTarget *out,int capacity,uint32_t from,
+                         uint32_t *total,uint64_t *dropped);
++
++/* Optional presentation-only translation pilot; guest bytes stay intact. */
++uint8_t cdi_native_text_byte(uint32_t address, uint8_t original);

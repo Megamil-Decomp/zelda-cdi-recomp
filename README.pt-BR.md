@@ -12,7 +12,7 @@ Port nativo e recompilador estático para os três clássicos do Philips CD-i:
 - **Zelda: The Wand of Gamelon** (1993)
 - **Zelda's Adventure** (1996)
 
-O projeto reconstrói o código original da arquitetura Philips/Motorola SCC68070 (CD-RTOS / OS-9) diretamente para código de máquina nativo **ARM64 (Apple Silicon)**, eliminando a sobrecarga de emulação pesada tradicional e viabilizando futuros portes para **Windows** e **Linux**.
+O projeto recompila estaticamente código Philips/Motorola SCC68070 (CD-RTOS / OS-9) para **ARM64 (Apple Silicon)**, com fallback interpretado medido nos caminhos ainda sem cobertura estática. macOS é o primeiro alvo; **Windows** e **Linux** são portes futuros.
 
 ---
 
@@ -31,11 +31,13 @@ O projeto reconstrói o código original da arquitetura Philips/Motorola SCC6807
 ## 🎮 Status Atual do Projeto
 
 Os três jogos já inicializam a partir do cold boot da BIOS oficial, executam a rotina de boot real do CD-i, reconhecem a mídia e carregam com sucesso:
-- **Faces of Evil**: Boot completo até o *Game Menu* (Start Game, Load Game, etc.).
-- **Wand of Gamelon**: Boot completo até o *Game Menu* (Start Game, Load Game, etc.).
-- **Zelda's Adventure**: Boot completo com introdução em FMV do mago Gaspra e pergaminho da história.
+- **Faces of Evil**: Menu e trechos da primeira área testados, incluindo combate e retorno ao mapa; correções de leitura e interrupções no candidato local.
+- **Wand of Gamelon**: Candidato local com análise REA, novas entradas estáticas e ensaio de mapa/área de Sakado.
+- **Zelda's Adventure**: Build privada **0.1.6** com análise REA, novas entradas estáticas do jogo e de rotinas de vídeo da BIOS. No percurso adicional comparado: 89,19% → 92,20% de instruções nativas, incluindo BIOS; candidato testado a 1x, com transição, dano/retorno e inventário. Interpretação permanece como fallback; campanha completa ainda não validada. Veja [resultados e limites](docs/PROGRESS.md).
 - **Launcher Nativo macOS**: Aplicativo gráfico completo em Swift/AppKit com seleção de jogos, validação automática de checksum SHA-256 da BIOS/Discos, empacotamento em `.app` e instalador `.dmg`.
 - **Suporte Multilíngue na Interface**: Alternância dinâmica entre **English** (padrão) e **Português (Brasil)** no launcher.
+
+Para gerar uma cópia privada completa para outro Mac Apple Silicon: `python3 scripts/export_private_macos.py`. O ZIP inclui as mídias locais e fica fora do Git. Veja [exportação privada](docs/PRIVATE_EXPORT.md) e [portabilidade para outras plataformas](docs/PORTABILITY.md).
 
 ---
 

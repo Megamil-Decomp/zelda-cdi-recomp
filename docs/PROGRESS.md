@@ -1,5 +1,15 @@
 # Progresso
 
+## 2026-10-29 — primeiro pacote Windows x64 para teste
+
+Cross-compilados os três candidatos aceitos para PE x64 com MinGW GCC, mantendo o C gerado e os patches existentes. Cada fonte foi conferida contra a proveniência aceita; staging Windows separado e checkout upstream intacto. SDK SDL2 2.32.10 obtido da publicação oficial, com hash conferido; nenhuma mídia foi baixada.
+
+Criados launcher Win32 e `scripts/build_windows_runtimes.py` / `scripts/export_private_windows.py`. A interface oferece seleção dos três jogos, verificação SHA-256 dos runtimes/BIOS/CUE/BIN, cache normalizado, saves/logs por título, encerramento normal e mod PT-BR parcial opcional de Adventure. Executáveis incorporam manifesto UTF-8. O pacote inclui a DLL SDL2 e as licenças; não precisa de Python, REA ou compilador no computador destino.
+
+Primeiro ZIP em `dist/windows-preview/Zelda-CDi-Windows-Completo.zip`. Conferidos PE x64, imports/DLLs presentes, manifesto UTF-8 nos quatro executáveis, hashes dos arquivos copiados e integridade ZIP. **133 testes sintéticos Python passaram**; launcher compilou também com `-Wall -Wextra -Werror`. Uma nova execução do build de Faces reutilizou os objetos existentes, sem recompilar o jogo.
+
+**Execução real no Windows ainda não validada.** Não há Windows/Wine disponível neste host; testes CTest Windows foram compilados, não executados. Não atribuir aceitação de gameplay Windows às reproduções anteriores no Mac. O pacote é a versão para o teste solicitado pelo usuário. Instruções em `WINDOWS_TESTING.md`; plano em `WINDOWS_PLAN.md`. Mídia e saves originais, runtimes macOS e fontes upstream permanecem preservados.
+
 ## 2026-10-29 — exportação completa para outro Mac
 
 Criado `scripts/export_private_macos.py`: verifica o aplicativo aceito e os hashes da mídia, copia somente a BIOS selecionada e os três pares CUE/BIN para `Contents/Resources/LocalMedia`, compila o launcher atualizado na cópia e remove a raiz absoluta da origem. Detecta mídias internas sem dependência da pasta do projeto. A cópia tem domínio próprio de preferências; não contém saves pessoais. Originais e pacote principal permanecem preservados.

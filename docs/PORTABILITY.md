@@ -1,6 +1,6 @@
 # Portabilidade: avaliação em 2026-10-29
 
-Esta é uma avaliação do código local e da documentação dos SDKs; nenhum port Windows/Vita/3DS foi compilado ou validado nesta etapa. Níveis abaixo são estimativas de engenharia, não prazos garantidos.
+Avaliação do código local e da documentação dos SDKs. Após esta avaliação, os três runtimes e um launcher Win32 foram cross-compilados para Windows x64, com exportador privado reutilizável; veja [teste Windows](WINDOWS_TESTING.md). A execução real no Windows continua pendente. Vita/3DS não foram compilados. Níveis abaixo são estimativas de engenharia, não prazos garantidos.
 
 | Destino | Complexidade estimada | Trabalho principal |
 | --- | --- | --- |

@@ -1,5 +1,13 @@
 # Decisões
 
+## 2026-10-29 — Windows no mesmo projeto, com exportação própria
+
+Usuário pediu uma versão Windows para testar e um comando equivalente ao exportador Mac. Reutilizar exatamente os inputs dos candidatos aceitos, conferidos por proveniência/hash, em cópias Windows isoladas. Não reeditar o upstream nem trocar o mecanismo de recompilação. Manter BIOS distinta de Adventure e a BIOS aceita em Faces/Gamelon.
+
+Usar MinGW x64 e SDL2 Windows oficial com identidade fixada. Criar launcher Win32 autoral e exportador Python: validação de executáveis/mídia, cache normalizado de BIOS, saves/logs por título e mod opcional. Incorporar manifesto UTF-8 nos executáveis para os caminhos com acentos no alvo Windows 10 1903+; não exigir mudança global de locale ou privilégio administrativo. Não encerrar o runtime à força para preservar saves.
+
+Entregar como primeiro pacote de teste cross-compilado. Sem ambiente Windows/Wine disponível, não declarar gameplay, áudio, controles ou desempenho Windows aprovados. Builds, mídia e pacote completo permanecem privados/ignorados; código autoral e testes sintéticos podem ser versionados sob a autorização de commit já dada para os ajustes deste trabalho.
+
 ## 2026-10-29 — exportação completa privada e commit dos ajustes
 
 Usuário autorizou copiar os arquivos locais necessários para testar em outro Mac e solicitou commit dos ajustes, excluindo arquivos dos jogos. A exportação pode conter BIOS e discos somente na cópia ignorada de `dist/`; não muda a regra do Git nem autoriza publicação/upload. Preservar a mídia original e não incluir saves pessoais.

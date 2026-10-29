@@ -12,7 +12,7 @@ Port nativo e recompilador estático para os três clássicos do Philips CD-i:
 - **Zelda: The Wand of Gamelon** (1993)
 - **Zelda's Adventure** (1996)
 
-O projeto recompila estaticamente código Philips/Motorola SCC68070 (CD-RTOS / OS-9) para **ARM64 (Apple Silicon)**, com fallback interpretado medido nos caminhos ainda sem cobertura estática. macOS é o primeiro alvo; **Windows** e **Linux** são portes futuros.
+O projeto recompila estaticamente código Philips/Motorola SCC68070 (CD-RTOS / OS-9) para **ARM64 (Apple Silicon)**, com fallback interpretado medido nos caminhos ainda sem cobertura estática. macOS é o primeiro alvo; **Windows** tem um pacote experimental cross-compilado; **Linux** é um porte futuro.
 
 ---
 
@@ -35,6 +35,7 @@ Os três jogos já inicializam a partir do cold boot da BIOS oficial, executam a
 - **Wand of Gamelon**: Candidato local com análise REA, novas entradas estáticas e ensaio de mapa/área de Sakado.
 - **Zelda's Adventure**: Build privada **0.1.6** com análise REA, novas entradas estáticas do jogo e de rotinas de vídeo da BIOS. No percurso adicional comparado: 89,19% → 92,20% de instruções nativas, incluindo BIOS; candidato testado a 1x, com transição, dano/retorno e inventário. Interpretação permanece como fallback; campanha completa ainda não validada. Veja [resultados e limites](docs/PROGRESS.md).
 - **Launcher Nativo macOS**: Aplicativo gráfico completo em Swift/AppKit com seleção de jogos, validação automática de checksum SHA-256 da BIOS/Discos, empacotamento em `.app` e instalador `.dmg`.
+- **Windows x64**: Primeiro pacote privado cross-compilado, com seletor dos três jogos e exportador `python3 scripts/export_private_windows.py`. Execução real no Windows ainda pendente: [instruções de teste](docs/WINDOWS_TESTING.md).
 - **Suporte Multilíngue na Interface**: Alternância dinâmica entre **English** (padrão) e **Português (Brasil)** no launcher.
 
 Para gerar uma cópia privada completa para outro Mac Apple Silicon: `python3 scripts/export_private_macos.py`. O ZIP inclui as mídias locais e fica fora do Git. Veja [exportação privada](docs/PRIVATE_EXPORT.md) e [portabilidade para outras plataformas](docs/PORTABILITY.md).

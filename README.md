@@ -12,7 +12,7 @@ Native static recompilation (AOT) and standalone game player for the classic Phi
 - **Zelda: The Wand of Gamelon** (1993)
 - **Zelda's Adventure** (1996)
 
-This project statically recompiles original Motorola/Philips SCC68070 machine code (CD-RTOS / OS-9) into native **ARM64 (Apple Silicon)** code, with measured interpreter fallback for uncovered paths. macOS is the first target; **Windows** and **Linux** remain future ports.
+This project statically recompiles original Motorola/Philips SCC68070 machine code (CD-RTOS / OS-9) into native **ARM64 (Apple Silicon)** code, with measured interpreter fallback for uncovered paths. macOS is the first target; **Windows** has an experimental cross-compiled package; **Linux** remains a future port.
 
 ---
 
@@ -35,6 +35,7 @@ This project statically recompiles original Motorola/Philips SCC68070 machine co
 - **Zelda: The Wand of Gamelon**: Local REA-assisted candidate with additional static entries and a map/Sakado-area observation.
 - **Zelda's Adventure**: Private build **0.1.6** with REA-assisted static entries for the game and BIOS video routines. The additional paired route measured 89.19% → 92.20% native instructions, including BIOS; the candidate passed a 1x test with transitions, damage/return and inventory. Interpreter fallback remains; complete-game compatibility is unverified. See [results and limits](docs/PROGRESS.md).
 - **Native macOS Launcher**: Modern Swift/AppKit desktop application with bilingual support (**English** & **Portuguese (Brazil)**), automated SHA-256 media validation, and standalone `.app` / `.dmg` bundling.
+- **Windows x64**: First private cross-compiled package with a three-game Win32 launcher and `python3 scripts/export_private_windows.py`. Native Windows execution is still unvalidated: [testing instructions](docs/WINDOWS_TESTING.md).
 - **Stability & Crash Prevention**: Protected against accidental quits on focus switching or mouse capture changes.
 
 To create a complete private copy for another Apple Silicon Mac: `python3 scripts/export_private_macos.py`. The ZIP includes local media and stays outside Git. See [private export](docs/PRIVATE_EXPORT.md) and [platform portability](docs/PORTABILITY.md).

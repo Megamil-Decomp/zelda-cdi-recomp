@@ -1,5 +1,12 @@
 # Decisões
 
+## 2026-10-29 — backlog público com aceitação e contagem reproduzível
+
+Usuário pediu atualização do README e quadro estilo Trello no GitHub. Usar Project público vinculado ao repositório, issues com critério/área/prioridade e estados Backlog, Em andamento, A validar e Concluído. Registrar entregas já aceitas como issues fechadas, mantendo os limites de cada cenário; não equiparar build Windows a execução Windows nem piloto PT-BR a tradução integral.
+
+Percentual público conta entregas concluídas sobre o escopo cadastrado, com pesos iguais e data; não estima esforço restante, campanha ou fidelidade e fica separado de instruções nativas por percurso. JSON público alimenta os dois READMEs e BACKLOG.md. O workflow de eventos de issues usa apenas GITHUB_TOKEN efêmero, lê estados/labels e escreve somente os quatro arquivos de documentação previstos. Não importa títulos/corpos remotos nem inclui automaticamente novas issues no denominador. Campos/posições do Projects não são a fonte do resumo; fechar/reabrir ou mudar a label da issue atualiza a contagem. Nenhum token pessoal, recurso de jogo, build ou log privado é publicado.
+
+
 ## 2026-10-29 — menu de host e mouse independente de captura
 
 Atender primeiro o menu solicitado, comum aos três candidatos, sem tocar a lógica recompilada dos jogos. O retorno explícito de pausa do frontend impede avanço de CPU/dispositivos, mantém sinais/janela ativos e pausa a saída SDL. Volume atua no PCM copiado, com ganho unitário idêntico; fonte, rótulos e preferências são autorais. Esvaziar edges de mouse ao abrir e exigir controles neutros ao retomar. Manter a tradução externa parcial de Adventure.

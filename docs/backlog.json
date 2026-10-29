@@ -1,0 +1,318 @@
+{
+  "schema_version": 1,
+  "repository": "Megamil-Decomp/zelda-cdi-recomp",
+  "project_url": "https://github.com/users/Megamil-Decomp/projects/1/views/2",
+  "snapshot_date": "2026-10-29",
+  "items": [
+    {
+      "id": "ZCDI-001",
+      "area": "base",
+      "status": "done",
+      "priority": "P1",
+      "title": "Auditar dependências e isolar o upstream",
+      "acceptance": "Revisão auditada, termos/proveniência documentados e patches aplicados somente em staging privado.",
+      "evidence": "docs/UPSTREAM_AUDIT.md",
+      "issue_number": 1
+    },
+    {
+      "id": "ZCDI-002",
+      "area": "base",
+      "status": "done",
+      "priority": "P1",
+      "title": "Validar BIOS e discos fornecidos localmente",
+      "acceptance": "Ferramentas verificam formato, revisão e integridade local sem baixar mídia nem modificar originais.",
+      "evidence": "docs/ROM_REQUIREMENTS.md",
+      "issue_number": 2
+    },
+    {
+      "id": "ZCDI-003",
+      "area": "runtime",
+      "status": "done",
+      "priority": "P1",
+      "title": "Recompilar com proveniência e medir o fallback",
+      "acceptance": "C gerado permanece privado; identidades, dispatch nativo e interpretação são registrados sem alegar recompilação total.",
+      "evidence": "docs/ARCHITECTURE.md",
+      "issue_number": 3
+    },
+    {
+      "id": "ZCDI-004",
+      "area": "runtime",
+      "status": "done",
+      "priority": "P0",
+      "title": "Evitar leituras especulativas de MMIO no decode",
+      "acceptance": "Regressão sintética confirma que o fetch antecipado preserva registradores adjacentes e operandos reais ainda usam o barramento.",
+      "evidence": "scripts/patches/README.md",
+      "issue_number": 4
+    },
+    {
+      "id": "ZCDI-005",
+      "area": "runtime",
+      "status": "done",
+      "priority": "P0",
+      "title": "Corrigir IPL no reconhecimento de interrupções",
+      "acceptance": "Entrada de IRQ eleva a máscara ao nível reconhecido, preserva o frame e passa na regressão sintética.",
+      "evidence": "docs/DECISIONS.md",
+      "issue_number": 5
+    },
+    {
+      "id": "ZCDI-006",
+      "area": "runtime",
+      "status": "done",
+      "priority": "P0",
+      "title": "Retomar ADPCM após reposição do mesmo buffer em Adventure",
+      "acceptance": "Reposições repetidas após esvaziamento não deixam FINISH esperando; regressão e percursos conhecidos sem o erro de disco observado.",
+      "evidence": "docs/ADVENTURE_FIX_PLAN.md",
+      "issue_number": 6
+    },
+    {
+      "id": "ZCDI-007",
+      "area": "runtime",
+      "status": "done",
+      "priority": "P1",
+      "title": "Integrar REA à análise dos três jogos",
+      "acceptance": "REA/Ghidra auxilia entradas observadas e emissão estática pelo CdiRecomp, com validação de identidade e limites explícitos.",
+      "evidence": "docs/REA_WORKFLOW.md",
+      "issue_number": 7
+    },
+    {
+      "id": "ZCDI-008",
+      "area": "compatibilidade",
+      "status": "done",
+      "priority": "P1",
+      "title": "Validar um percurso inicial em Faces of Evil",
+      "acceptance": "Menu e trechos iniciais com movimento, combate/colisão e retorno ao mapa observados; esta entrega não aceita a campanha inteira.",
+      "evidence": "docs/PROGRESS.md",
+      "issue_number": 8
+    },
+    {
+      "id": "ZCDI-009",
+      "area": "compatibilidade",
+      "status": "done",
+      "priority": "P1",
+      "title": "Validar mapa e área de Sakado em Wand of Gamelon",
+      "acceptance": "Mapa, área de Sakado/loja e resposta a input observados; campanha e fases posteriores permanecem pendentes.",
+      "evidence": "docs/PROGRESS.md",
+      "issue_number": 9
+    },
+    {
+      "id": "ZCDI-010",
+      "area": "compatibilidade",
+      "status": "done",
+      "priority": "P1",
+      "title": "Validar percurso conhecido de Adventure a 1x",
+      "acceptance": "Menu, save, transição, dano/retorno e inventário completados no percurso registrado, com cobertura medida e sem erro de disco observado.",
+      "evidence": "docs/PROGRESS.md",
+      "issue_number": 10
+    },
+    {
+      "id": "ZCDI-011",
+      "area": "interface",
+      "status": "done",
+      "priority": "P1",
+      "title": "Entregar launcher Mac com seleção, idiomas e saves",
+      "acceptance": "Seletor dos três jogos, validação SHA-256, português/inglês, logs e dados separados por título no app local.",
+      "evidence": "app/macos/Launcher.swift",
+      "issue_number": 11
+    },
+    {
+      "id": "ZCDI-012",
+      "area": "interface",
+      "status": "done",
+      "priority": "P1",
+      "title": "Entregar menu de opções e mouse livre na versão 0.1.7",
+      "acceptance": "F1/Start pausa; fullscreen, tamanho, volume, mapa e mouse/captura respondem no Mac. Analógico implementado, ensaio físico separado.",
+      "evidence": "docs/PLAYER_MENU_PLAN.md",
+      "issue_number": 12
+    },
+    {
+      "id": "ZCDI-013",
+      "area": "plataformas",
+      "status": "done",
+      "priority": "P1",
+      "title": "Automatizar exportação privada completa para outro Mac",
+      "acceptance": "Exportador confere identidades, inclui mídias locais e dependências, exclui saves pessoais e gera ZIP portátil verificado.",
+      "evidence": "docs/PRIVATE_EXPORT.md",
+      "issue_number": 13
+    },
+    {
+      "id": "ZCDI-014",
+      "area": "plataformas",
+      "status": "done",
+      "priority": "P1",
+      "title": "Gerar launcher e pacote experimental Windows x64",
+      "acceptance": "Cross-build PE x64, manifesto UTF-8, DLLs e exportador verificados. A entrega é de construção/empacotamento; execução Windows é outra tarefa.",
+      "evidence": "docs/WINDOWS_PLAN.md",
+      "issue_number": 14
+    },
+    {
+      "id": "ZCDI-015",
+      "area": "localizacao",
+      "status": "done",
+      "priority": "P2",
+      "title": "Entregar piloto opcional de tradução de Adventure",
+      "acceptance": "EMPTY/VAZIO e cinco rótulos de menu via perfis externos; liga/desliga pelo idioma. Não equivale a tradução integral.",
+      "evidence": "docs/TEXT_PILOT_PLAN.md",
+      "issue_number": 15
+    },
+    {
+      "id": "ZCDI-016",
+      "area": "runtime",
+      "status": "in_progress",
+      "priority": "P1",
+      "title": "Expandir cobertura estática de Faces of Evil",
+      "acceptance": "Comparar novos caminhos contra referência, justificar seeds observadas e reduzir interpretação sem mudar semântica; registrar região e intervalo medidos.",
+      "evidence": "docs/REA_WORKFLOW.md",
+      "issue_number": 16
+    },
+    {
+      "id": "ZCDI-017",
+      "area": "runtime",
+      "status": "in_progress",
+      "priority": "P2",
+      "title": "Expandir cobertura estática de Wand of Gamelon",
+      "acceptance": "Validar novas entradas e percurso pareado além do ensaio inicial, medindo código nativo e rejeições sem inferir campanha por FPS.",
+      "evidence": "docs/REA_OTHER_TITLES_PLAN.md",
+      "issue_number": 17
+    },
+    {
+      "id": "ZCDI-018",
+      "area": "runtime",
+      "status": "in_progress",
+      "priority": "P1",
+      "title": "Expandir cobertura estática de Adventure e da BIOS",
+      "acceptance": "Continuar a partir dos ganhos medidos, identificar fallback residual por região e promover somente candidatos com comparação e replay a 1x.",
+      "evidence": "docs/REA_WORKFLOW.md",
+      "issue_number": 18
+    },
+    {
+      "id": "ZCDI-019",
+      "area": "compatibilidade",
+      "status": "in_progress",
+      "priority": "P0",
+      "title": "Investigar o fluxo de tela preta ainda aberto em Adventure",
+      "acceptance": "Reproduzir a sequência livre não explicada, distinguir transição de espera permanente e validar correção em cenário repetível sem atalhos no guest.",
+      "evidence": "docs/PROGRESS.md",
+      "issue_number": 19
+    },
+    {
+      "id": "ZCDI-020",
+      "area": "localizacao",
+      "status": "in_progress",
+      "priority": "P2",
+      "title": "Investigar recursos e próximos textos de Adventure",
+      "acceptance": "Identificar formatos, pontos de desenho e limitações antes de ampliar a tradução externa; preservar recursos/áudio originais.",
+      "evidence": "docs/LOCALIZATION.md",
+      "issue_number": 20
+    },
+    {
+      "id": "ZCDI-021",
+      "area": "interface",
+      "status": "validation",
+      "priority": "P1",
+      "title": "Testar controle físico, analógico e reconexão",
+      "acceptance": "No Mac, confirmar D-pad, A/B, Start, deadzone, soltura, reconexão e ausência de input residual após menu/foco com controle físico.",
+      "evidence": "docs/PLAYER_MENU_PLAN.md",
+      "issue_number": 21
+    },
+    {
+      "id": "ZCDI-022",
+      "area": "interface",
+      "status": "validation",
+      "priority": "P1",
+      "title": "Validar áudio físico e execução em outro Mac",
+      "acceptance": "Confirmar volume audível, pausa/retomada e ausência de estalos; abrir pacote sem Homebrew e testar o alvo macOS 13 em máquina compatível.",
+      "evidence": "docs/PRIVATE_EXPORT.md",
+      "issue_number": 22
+    },
+    {
+      "id": "ZCDI-023",
+      "area": "plataformas",
+      "status": "validation",
+      "priority": "P1",
+      "title": "Executar o pacote em Windows real",
+      "acceptance": "Validar os três títulos, caminhos acentuados, mouse, áudio, controles, save/reabertura e encerramento normal; registrar versão e limites.",
+      "evidence": "docs/WINDOWS_TESTING.md",
+      "issue_number": 23
+    },
+    {
+      "id": "ZCDI-024",
+      "area": "compatibilidade",
+      "status": "backlog",
+      "priority": "P1",
+      "title": "Ampliar aceitação da campanha de Faces of Evil",
+      "acceptance": "Enumerar e testar fases, mapas, itens, mortes, cinematics e save/restore com evidência por cenário; não declarar completo por uma área.",
+      "evidence": "docs/ROADMAP.md",
+      "issue_number": 24
+    },
+    {
+      "id": "ZCDI-025",
+      "area": "compatibilidade",
+      "status": "backlog",
+      "priority": "P2",
+      "title": "Ampliar aceitação da campanha de Wand of Gamelon",
+      "acceptance": "Construir matriz de fases/transições e testar progressão, inventário, combate e persistência por cenário.",
+      "evidence": "docs/ROADMAP.md",
+      "issue_number": 25
+    },
+    {
+      "id": "ZCDI-026",
+      "area": "compatibilidade",
+      "status": "backlog",
+      "priority": "P1",
+      "title": "Ampliar aceitação da campanha de Adventure",
+      "acceptance": "Testar telas, itens, combates, inventário e save/restore além do percurso conhecido; manter falhas e áreas não testadas explícitas.",
+      "evidence": "docs/ROADMAP.md",
+      "issue_number": 26
+    },
+    {
+      "id": "ZCDI-027",
+      "area": "plataformas",
+      "status": "backlog",
+      "priority": "P2",
+      "title": "Testar Steam Deck com Proton e Steam Input",
+      "acceptance": "Após Windows, confirmar seleção/boot, gamepad, trackpad, fullscreen, áudio, save e suspensão/retomada em hardware; sem presumir aprovação por SDL.",
+      "evidence": "docs/STEAM_DECK_PLAN.md",
+      "issue_number": 27
+    },
+    {
+      "id": "ZCDI-028",
+      "area": "plataformas",
+      "status": "backlog",
+      "priority": "P3",
+      "title": "Construir e validar uma versão Linux nativa",
+      "acceptance": "Reutilizar fontes e proveniência, criar empacotamento Linux e validar dependências, controles, áudio e saves no destino.",
+      "evidence": "docs/PORTABILITY.md",
+      "issue_number": 28
+    },
+    {
+      "id": "ZCDI-029",
+      "area": "localizacao",
+      "status": "backlog",
+      "priority": "P3",
+      "title": "Ampliar localização PT-BR dos três jogos",
+      "acceptance": "Mapear recursos por título, traduzir textos autorais, suportar acentos/quebras e investigar legendas sincronizadas preservando áudio original.",
+      "evidence": "docs/LOCALIZATION.md",
+      "issue_number": 29
+    },
+    {
+      "id": "ZCDI-030",
+      "area": "base",
+      "status": "backlog",
+      "priority": "P2",
+      "title": "Comparar fidelidade com uma referência independente",
+      "acceptance": "Definir cenários e referência identificada de hardware/comparador, medir imagem, áudio e temporização sem confundir cobertura com fidelidade.",
+      "evidence": "docs/ROADMAP.md",
+      "issue_number": 30
+    },
+    {
+      "id": "ZCDI-031",
+      "area": "base",
+      "status": "backlog",
+      "priority": "P2",
+      "title": "Definir termos para distribuição de derivados do runtime",
+      "acceptance": "Resolver explicitamente os termos não comerciais específicos do upstream antes de distribuição de derivados; MIT do código próprio não relicencia dependências.",
+      "evidence": "docs/UPSTREAM_AUDIT.md",
+      "issue_number": 31
+    }
+  ]
+}

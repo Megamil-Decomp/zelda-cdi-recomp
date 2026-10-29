@@ -1,5 +1,7 @@
 # Roadmap
 
+O acompanhamento atual fica no [quadro e backlog](BACKLOG.md), com entregas, prioridades, estados e critérios de aceitação. Os marcos abaixo preservam os critérios técnicos originais; não indicam, isoladamente, que cada condição já foi atendida. Evidências e limitações atuais estão em [PROGRESS.md](PROGRESS.md).
+
 Cada marco termina com resultados reproduzíveis e uma lista de limitações. Não tratar um inventário ou uma janela aberta como jogo recompilado.
 
 | Marco | Trabalho | Critério de saída |
@@ -24,13 +26,13 @@ Cada marco termina com resultados reproduzíveis e uma lista de limitações. N�
 
 O prazo máximo de boot deve ser definido e registrado após obter uma referência temporizada. Não inventar uma duração agora. Para M3, exigir participação nativa mensurável na lógica do jogo; o alvo de produto permanece eliminar fallback nos caminhos aceitos, com erros explícitos para código não coberto.
 
-## Próxima execução sugerida
+## Próximas frentes
 
-> Continue no marco M1 de Faces of Evil: use o inventário privado já produzido para mapear módulos, entradas e relocação; proponha um teste comparável para o primeiro módulo antes de emitir e compilar código localmente. Mantenha todos os derivados em data/private ou build, registre cobertura e limitações, não altere upstream-cdirecomp e não faça commits ou pushes.
+Consultar as issues do [backlog atual](BACKLOG.md): investigar o fluxo de tela preta de Adventure, ampliar percursos/cobertura estática e validar Windows, controles e áudio físicos. Steam Deck/Linux e tradução mais ampla têm aceitação separada. Prioridades podem mudar conforme novas falhas reproduzíveis; não usar a sequência histórica M0–M6 como lista de execução obrigatória.
 
 ## Pendências manuais
 
 - Não é preciso fornecer mais mídia para continuar a pesquisa de Faces.
 - Antes de distribuir código baseado no upstream, definir se o escopo será não comercial ou obter termos apropriados; uma dependência separada não elimina a restrição.
-- Antes de publicar o código próprio, escolher licença e revisar proveniência. Não foi atribuída automaticamente uma licença permissiva ao projeto.
+- O código próprio foi publicado sob MIT; revisar proveniência e resolver termos específicos antes de distribuir derivados do runtime upstream. MIT não relicencia o conjunto.
 - Uma referência de execução em hardware ou comparador independente será necessária para certificar fidelidade; os testes atuais não a substituem.

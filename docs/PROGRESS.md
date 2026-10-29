@@ -1,5 +1,16 @@
 # Progresso
 
+## 2026-10-29 — README atualizado e quadro público de entregas
+
+Atendido pedido de atualizar o leia-me e organizar um backlog estilo Trello no GitHub. Criado Project público vinculado ao repositório, com visão Board, quatro estados ordenados, área e prioridade. Cadastradas 31 issues com critérios de aceitação e referências públicas: 15 entregas concluídas/fechadas, 5 frentes em andamento, 3 a validar e 8 no backlog. API conferiu vínculo, visibilidade, contagens e correspondência das 15 issues fechadas. Quadro: https://github.com/users/Megamil-Decomp/projects/1/views/2.
+
+README inglês e português agora registram Mac 0.1.7, menu/mouse, limites de controles/áudio/Windows, tradução parcial e distinção entre cobertura nativa e aceitação de campanha. Corrigidos clone e preparação do upstream fixado, dependência SDL privada e licença do conjunto. Os marcos técnicos originais continuam no ROADMAP com indicação do backlog operacional atual.
+
+`docs/backlog.json` é o escopo público cadastrado; `scripts/update_backlog.py` gera resumos nos dois READMEs e `docs/BACKLOG.md`. O percentual inicial é 15/31 = 48% de entregas, com pesos iguais, sem estimar progresso parcial/esforço/campanha. A sincronização de leitura das issues passou localmente e não produziu divergências. Novas issues não alteram automaticamente o denominador; cancelamento não conta como entrega aceita. Não são importados corpos/títulos remotos para documentação.
+
+**151 testes Python passaram**, incluindo nove regressões sintéticas para contagem, cancelamento, reabertura, labels conflitantes, escopo fixo, falha de refresh parcial, marcadores de README e rejeição de referências privadas. `--check` e diff de espaços limpos. Workflow de eventos de issues usa apenas o token efêmero de Actions com leitura de issues/escrita de documentação; a publicação e a execução remota são conferidas na etapa final. Nenhuma mídia, save, binário ou credencial pessoal foi enviada ao repositório.
+
+
 ## 2026-10-29 — menu durante o jogo, mouse livre e pacote Mac 0.1.7
 
 Implementado o plano `PLAYER_MENU_PLAN.md` nos três candidatos aceitos, preservando código gerado, BIOS e seeds. Patch 0010 e headers autorais acrescentam F1/Start, pausa, tela cheia, três tamanhos, volume, mouse, captura e mapa informativo de botões. Preferências ficam em `frontend.cfg`; abertura limpa cliques pendentes e retomada espera controles neutros. Analógico esquerdo com deadzone implementado; falta controle físico. O piloto PT-BR de Adventure permanece parcial e opcional; os novos textos do menu seguem português/inglês do launcher.

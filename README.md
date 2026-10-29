@@ -1,125 +1,118 @@
-# 🗡️ Zelda CD-i Native Recompilation (`zelda-cdi-recomp`)
+# Zelda CD-i Native Recompilation
 
-[![Platform](https://img.shields.io/badge/platform-macOS%20Apple%20Silicon-blue.svg)](https://apple.com)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-experimental-orange.svg)](#current-project-status)
-[![Languages](https://img.shields.io/badge/i18n-English%20%7C%20Portugu%C3%AAs-purple.svg)](#launcher-interface)
+[![macOS](https://img.shields.io/badge/macOS-Apple%20Silicon-blue)](#current-status)
+[![Status](https://img.shields.io/badge/status-experimental-orange)](#current-status)
+[![License](https://img.shields.io/badge/license-MIT%20for%20original%20code-green)](#license-and-provenance)
 
-*English* | [*Português do Brasil*](README.pt-BR.md)
+English | [Português do Brasil](README.pt-BR.md)
 
-Native static recompilation (AOT) and standalone game player for the classic Philips CD-i trilogy:
-- **Link: The Faces of Evil** (1993)
-- **Zelda: The Wand of Gamelon** (1993)
-- **Zelda's Adventure** (1996)
+Native recompilation research and a desktop player for **Link: The Faces of Evil**, **Zelda: The Wand of Gamelon** and **Zelda's Adventure** on Philips CD-i.
 
-This project statically recompiles original Motorola/Philips SCC68070 machine code (CD-RTOS / OS-9) into native **ARM64 (Apple Silicon)** code, with measured interpreter fallback for uncovered paths. macOS is the first target; **Windows** has an experimental cross-compiled package; **Linux** remains a future port.
+Original SCC68070 / CD-RTOS / OS-9 code is statically recompiled to native code, with **measured interpreter fallback** for uncovered paths. REA/Ghidra assists analysis; CdiRecomp remains the code emitter. This is an experimental hybrid runtime, with full campaigns and fidelity still under investigation.
 
----
+## Progress and Kanban board
 
-## 📸 Screenshots
+<!-- BACKLOG:START -->
+[Open the Kanban board](https://github.com/users/Megamil-Decomp/projects/1/views/2) · [Backlog and acceptance criteria](docs/BACKLOG.md)
 
-| Main Launcher (GUI) | Controls & Key Mapping Window |
-| :---: | :---: |
-| ![Launcher GUI](screenshots/gui.png) | ![Controls Window](screenshots/controls.png) |
+**15 / 31 registered deliveries completed (48%)** · updated 2026-10-29.
 
-| Link: The Faces of Evil | Zelda: The Wand of Gamelon | Zelda's Adventure |
-| :---: | :---: | :---: |
-| ![Faces of Evil](screenshots/faces-of-evil.png) | ![Wand of Gamelon](screenshots/wand-of-gamelon.png) | ![Zelda's Adventure](screenshots/zeldas-adventure.png) |
+Done: **15** · In progress: **5** · Awaiting validation: **3** · Backlog: **8**.
 
----
+This counts scoped deliveries equally; it is not a percentage of complete campaigns, effort, fidelity or native-code coverage. Scope changes can lower the percentage.
 
-## 🎮 Current Project Status
+| Area | Done / planned | Deliveries |
+| --- | ---: | ---: |
+| Foundation and fidelity | 2 / 4 | 50% |
+| Recompilation and runtime | 5 / 8 | 62% |
+| Game compatibility | 3 / 7 | 43% |
+| Interface and controls | 2 / 4 | 50% |
+| Platforms and export | 2 / 5 | 40% |
+| PT-BR localization | 1 / 3 | 33% |
+<!-- BACKLOG:END -->
 
-- **Execution**: Static recompilation with measured interpreter fallback; short acceptance scenarios do not certify a complete campaign.
-- **Link: The Faces of Evil**: Menu and first-area segments tested, including combat and return to the map; fetch and interrupt fixes in the local candidate.
-- **Zelda: The Wand of Gamelon**: Local REA-assisted candidate with additional static entries and a map/Sakado-area observation.
-- **Zelda's Adventure**: Private build **0.1.6** with REA-assisted static entries for the game and BIOS video routines. The additional paired route measured 89.19% → 92.20% native instructions, including BIOS; the candidate passed a 1x test with transitions, damage/return and inventory. Interpreter fallback remains; complete-game compatibility is unverified. See [results and limits](docs/PROGRESS.md).
-- **Native macOS Launcher**: Modern Swift/AppKit desktop application with bilingual support (**English** & **Portuguese (Brazil)**), automated SHA-256 media validation, and standalone `.app` / `.dmg` bundling.
-- **Windows x64**: First private cross-compiled package with a three-game Win32 launcher and `python3 scripts/export_private_windows.py`. Native Windows execution is still unvalidated: [testing instructions](docs/WINDOWS_TESTING.md).
-- **Stability & Crash Prevention**: Protected against accidental quits on focus switching or mouse capture changes.
+The board has **Backlog → In progress → Awaiting validation → Done**, with an acceptance criterion, area and priority on each issue. See [technical results](docs/PROGRESS.md) for evidence and limits.
 
-To create a complete private copy for another Apple Silicon Mac: `python3 scripts/export_private_macos.py`. The ZIP includes local media and stays outside Git. See [private export](docs/PRIVATE_EXPORT.md) and [platform portability](docs/PORTABILITY.md).
+## Current status
 
----
+Last accepted private Mac build: **0.1.7 (build 8), 2026-10-29**. There is no public download of the complete game package.
 
-## ⚠️ Media Requirements (Bring Your Own Media)
+| Area | What is implemented or observed | Still pending |
+| --- | --- | --- |
+| Faces of Evil | Menu and first-area segments, movement/combat and return to the map | Broader routes, campaign, independent fidelity checks |
+| Wand of Gamelon | REA-assisted static entries; map and Sakado/shop-area observations | Paired tests and later areas/campaign |
+| Zelda's Adventure | Known 1x route with save loading, transition, damage/return and inventory | An unexplained black-screen flow, later areas/campaign |
+| macOS arm64 | Bilingual launcher, media validation, per-title saves, player menu, mouse and portable export | Physical controller/audio and another Mac/macOS 13 acceptance |
+| Windows x64 | Cross-compiled runtimes, Win32 launcher and complete private exporter | Real Windows execution; older preview ZIP lacks the new player menu |
+| Steam Deck / Linux | Port plan and shared input code | Hardware/Proton tests and native Linux packaging |
+| PT-BR | Optional Adventure pilot: empty-slot label and five menu button labels | Remaining game texts, fonts/resources and subtitles |
 
-> **LEGAL NOTICE:** This repository **DOES NOT** contain, distribute, or host any proprietary BIOS ROMs, game disc images, copyrighted audio, video, or artwork.
+For Adventure, the paired additional route measured **89.19% → 92.20% native instructions, including BIOS**. A later 1x route measured 92.27%. These are interval-specific instruction ratios, not campaign completion or a speed benchmark. [Method, results and limitations](docs/PROGRESS.md).
 
-To build and run the recompiled games, you must provide your own legally dumped files:
+Validation recorded for 0.1.7: **142 Python tests**, **11/11 CTests per runtime** (three builds), actual Mac interaction with the host menu/mouse, and boot/shutdown checks of all three packaged binaries. Physical audio/gamepad and Windows execution are not covered by these checks.
 
-### 1. CD-i System BIOS
-- **File**: `cdi490a.rom` (exactly 524,288 bytes / 512 KiB).
-- **Compatible models**: Philips CD-i 490, CD-i 910 or compatible mono-board system BIOS.
-- **Note**: Both standard big-endian and byte-swapped (`swap16`) ROM dumps are automatically detected, normalized, and cached in your private workspace without altering your original file.
+## Player menu and controls
 
-### 2. Game Disc Images
-- **Format**: Raw Mode-2 CD-ROM dumps consisting of a `.cue` sheet and its companion `.bin` data track (2352 bytes/sector).
-- **Required Titles**:
-  - `Link - The Faces of Evil (Europe).cue` / `.bin`
-  - `Zelda - The Wand of Gamelon (Europe).cue` / `.bin`
-  - `Zelda's Adventure (Europe).cue` / `.bin`
-- **Validation**: The launcher automatically computes the SHA-256 hash of your disc image to confirm that the game revision matches the recompiled binary modules.
+**F1 / Start** opens options and pauses game execution and host audio. It provides fullscreen, three window sizes, volume, mouse enable/capture and an informational button map. Host preferences persist per title in `frontend.cfg`.
 
----
+| Action | Keyboard / mouse | SDL gamepad mapping |
+| --- | --- | --- |
+| Direction | Arrows or WASD | D-pad / left stick with deadzone |
+| CD-i button 1 | Space / Enter / Z / left click | A |
+| CD-i button 2 | Backspace / X / right click | B |
+| Options / resume | F1 (possibly Fn + F1 on Mac) | Start |
+| Fullscreen | F11 or Alt + Enter | Available in options |
+| Capture / release cursor | F2 | Available in options |
+| Back in host menu | Esc | B |
+| Exit game | Cmd + Q / Cmd + Esc, or options menu | Available in options |
 
-## 🕹️ Controls
+A/B refer to SDL's controller mapping; printed button labels vary by controller. Direct left-stick support is implemented and tested synthetically; a physical-controller test is pending. The launcher still needs keyboard/mouse input.
 
-The native runtime uses **SDL2**, supporting keyboard, modern USB/Bluetooth controllers, and mouse cursor input:
+Mouse input works in the focused game window **without requiring capture**. Motion moves the CD-i pointer relatively; it does not place it at the computer pointer's absolute position. F2 optionally confines the cursor. Opening the host menu consumes pending mouse clicks and releases capture.
 
-### ⌨️ Keyboard
-| Action | Default Keys |
-| :--- | :--- |
-| **Movement / Directional** | Arrow Keys (`↑` `↓` `←` `→`) or `W`, `A`, `S`, `D` |
-| **Button 1 (Action / Attack / Jump)** | `Space`, `Enter`, or `Z` |
-| **Button 2 (Secondary Item / Cancel)** | `Backspace` or `X` |
-| **Toggle Fullscreen** | `F11` or `Alt + Enter` |
-| **Options / pause menu** | `F1` (on some Macs, `Fn + F1`) |
-| **Capture / release mouse** | `F2` |
-| **Quit Game** | `Cmd + Q` or `Cmd + ESC` |
+## Export a private test copy
 
-### 🎮 Gamepad (Xbox, PlayStation, Switch Pro, generic USB controllers)
-| Action | Controller Mapping |
-| :--- | :--- |
-| **Movement** | D-Pad or left stick (deadzone applied) |
-| **Options / pause menu** | `Start` |
-| **Button 1 (Attack / Confirm)** | Button `A` (Xbox) / `✕` (PlayStation) / `B` (Nintendo) |
-| **Button 2 (Secondary Item)** | Button `B` (Xbox) / `○` (PlayStation) / `A` (Nintendo) |
+From a prepared workspace with an accepted Mac application and matching local media:
 
-### 🖱️ Mouse
-- Mouse motion moves the on-screen CD-i cursor.
-- Mouse input is enabled inside the focused window even without capture. `F2` optionally confines the cursor. Motion is relative, so the computer and CD-i pointers need not share a position.
-- **Left click**: Button 1 (Action / Confirm).
-
-The in-game menu offers fullscreen, three window sizes, volume, mouse/capture toggles and an informational button map. Navigate with arrows and Enter, D-pad and A/B, or mouse clicks. `Esc` goes back; `F1`/`Start` resumes. Settings persist per title in `frontend.cfg`, alongside the existing player settings. Game execution and host audio pause while this menu is open. The new menu is included in Mac 0.1.7; the older Windows preview ZIP has not been updated or executed on Windows.
-
----
-
-## 🛠️ How to Build and Run on macOS
-
-### Prerequisites
-- macOS 13.0 or later (Apple Silicon arm64 recommended).
-- Xcode Command Line Tools:
-  ```sh
-  xcode-select --install
-  ```
-- CMake and SDL dependencies:
-  ```sh
-  brew install cmake sdl2
-  ```
-
-### 1. Clone the Repository
 ```sh
-git clone https://github.com/Megamil-Decomp/zelda-cdi-recomp.git
-cd zelda-cdi-recomp
+python3 scripts/export_private_macos.py
 ```
 
-### 2. Place Your Media Files
-Place your dumps in the local folders (these directories are ignored by Git to protect private files):
+This creates a new dated export in ignored `dist/exports/`, including matching BIOS/discs, runtime dependencies and the launcher, without personal saves. On another Apple Silicon Mac, extract the ZIP and open the complete `.app`. The destination does not need Python, REA, Homebrew or a compiler. The app has a local signature and is not Apple-notarized. [Mac export details](docs/PRIVATE_EXPORT.md).
+
+Windows construction/export uses the same project:
+
+```sh
+python3 scripts/export_private_windows.py
+```
+
+Requires a prepared accepted catalog and the cross-compilation toolchain on the source machine. The resulting Windows folder includes its DLLs and local media. **Real Windows testing remains pending.** [Test checklist](docs/WINDOWS_TESTING.md) · [Portability](docs/PORTABILITY.md) · [Steam Deck plan](docs/STEAM_DECK_PLAN.md).
+
+Complete exports stay private and outside Git. No game or BIOS downloads are provided.
+
+## Build a research baseline on macOS
+
+Requires **Apple Silicon / macOS 13+**, Python 3, Git, Xcode Command Line Tools and CMake. This is the development setup; complete private exports do not need these tools.
+
+```sh
+xcode-select --install
+brew install cmake
+
+git clone https://github.com/Megamil-Decomp/zelda-cdi-recomp.git
+cd zelda-cdi-recomp
+
+git clone https://github.com/mstan/cdirecomp.git upstream-cdirecomp
+git -C upstream-cdirecomp checkout f3c8d579efb11d5a33c6bc7c935dfbced773e62e
+git -C upstream-cdirecomp submodule update --init --recursive
+```
+
+Review [upstream licensing and provenance](docs/UPSTREAM_AUDIT.md). The build verifies the audited revisions and applies patches to a private staging copy. A pinned native SDL2 SDK is downloaded from its official release and built privately for macOS 13; no global SDL installation is replaced.
+
+Provide your own compatible dumps in these ignored directories:
+
 ```text
 bios/
   cdi490a.rom
-
 roms/
   Link The Faces of Evil/
     Link - The Faces of Evil (Europe).cue
@@ -132,47 +125,45 @@ roms/
     Zelda's Adventure (Europe).bin
 ```
 
-### 3. Rebuild Native Game Runtimes
+BIOS size: 524,288 bytes; big-endian and swap16 normalization are checked locally. Discs use supported raw Mode-2 CUE/BIN pairs. A matching revision is required, not just a matching filename. [Media requirements](docs/ROM_REQUIREMENTS.md).
+
 ```sh
 python3 scripts/build_native_runtimes.py --jobs 4
-```
-
-### 4. Package Standalone macOS App and DMG
-```sh
 python3 scripts/build_macos_app.py
-```
-The output will be created in:
-- `dist/Zelda CD-i.app`
-- `dist/Zelda-CDi-AppleSilicon.dmg`
-
-To launch:
-```sh
 open "dist/Zelda CD-i.app"
 ```
 
----
+Outputs remain under ignored `build/` and `dist/`. These commands create a **research baseline**. The accepted optimized 0.1.7 build additionally uses locally observed seeds and an explicit private runtime catalog, which are not distributed as game-derived code. Do not assume a fresh baseline has the same static coverage or acceptance as the private candidate. [REA workflow](docs/REA_WORKFLOW.md) · [Player menu build](docs/PLAYER_MENU_PLAN.md).
 
-## 📋 Roadmap & Backlog
+Run the project's synthetic tool tests with:
 
-- [x] **Stable 60 FPS native execution** on macOS Apple Silicon.
-- [x] **IKAT Channel C support** resolving Zelda's Adventure screen transition disk timeouts.
-- [x] **Bilingual launcher** (English & Brazilian Portuguese).
-- [ ] **Port to Windows & Linux**: Extend CMake configurations and runner backends for Windows x86_64 and Linux.
-- [ ] **Brazilian Portuguese Translation (PT-BR)**: External mod architecture with string replacement, localized fonts, and synchronized cinematic subtitles without modifying original audio.
-- [ ] **Mouse Aiming Enhancement**: Refine mouse cursor responsiveness and optional crosshair aiming.
-- [ ] **Enhanced Static Coverage**: Eliminate residual module rejections to increase the percentage of pure AOT code.
+```sh
+python3 -m unittest discover -s tests -v
+```
 
----
+## Screenshots
 
-## 🤝 Credits & Acknowledgements
+Historical development captures; they are not a certification of the latest build or a complete campaign.
 
-- **cdirecomp** ([mstan/cdirecomp](https://github.com/mstan/cdirecomp)): Upstream CD-i reverse-engineering research and m68k recompiler core by Matthew Stan.
-- **N64Recomp & Zelda64Recomp** ([Zelda64Recomp](https://github.com/Zelda64Recomp/Zelda64Recomp)): Pioneers and inspiration in the modern static recompilation scene.
-- **libSDL**: High-performance multiplatform audio, video, and input backend.
-- **Philips & Nintendo**: Original creators and trademark holders of the Philips CD-i platform and *The Legend of Zelda* franchise.
+| Launcher | Controls |
+| --- | --- |
+| ![Launcher](screenshots/gui.png) | ![Controls](screenshots/controls.png) |
 
----
+| Faces of Evil | Wand of Gamelon | Zelda's Adventure |
+| --- | --- | --- |
+| ![Faces of Evil](screenshots/faces-of-evil.png) | ![Wand of Gamelon](screenshots/wand-of-gamelon.png) | ![Zelda's Adventure](screenshots/zeldas-adventure.png) |
 
-## 📄 License
+## Documentation
 
-This project is licensed under the **MIT License** for all original launcher code, scripts, patches, and tooling developed in this repository. See [LICENSE](LICENSE) for details and third-party notices.
+- [Backlog, priorities and acceptance criteria](docs/BACKLOG.md)
+- [Technical progress and limitations](docs/PROGRESS.md) · [Decisions](docs/DECISIONS.md)
+- [Architecture](docs/ARCHITECTURE.md) · [Original technical milestones](docs/ROADMAP.md)
+- [Optional localization](docs/LOCALIZATION.md) · [REA analysis workflow](docs/REA_WORKFLOW.md)
+
+## License and provenance
+
+[MIT](LICENSE) applies to the original host code and tools authored here. **It does not relicense the upstream runtime, recompiler core, patch context or commercial game code.** The audited upstream contains specific noncommercial terms under a PolyForm Noncommercial title; see the [audit](docs/UPSTREAM_AUDIT.md) before reusing or distributing derivatives. SDL uses its own zlib license.
+
+BIOS, disc images, extracted resources, saves and generated commercial code are excluded from Git. Bring your own compatible media; complete builds remain private. This project is not affiliated with Nintendo or Philips.
+
+Thanks to [mstan/cdirecomp](https://github.com/mstan/cdirecomp) and its m68k core, [N64Recomp](https://github.com/N64Recomp/N64Recomp), [Zelda64Recomp](https://github.com/Zelda64Recomp/Zelda64Recomp) and SDL for the research, references and host technology.

@@ -1,5 +1,11 @@
 # Progresso
 
+## 2026-10-29 — auditoria para publicação do código e próximos passos Deck
+
+Usuário autorizou push dos ajustes, excluindo ROMs e versões completas. Revisados os três commits locais pendentes, contendo somente fontes autorais, patches, testes e documentação; caminhos privados e extensões de mídia/pacotes não estão versionados nesse conjunto. Não criar release/anexar ZIPs completos.
+
+Avaliação para Steam Deck em `STEAM_DECK_PLAN.md`: começar por validar Windows e testar seu pacote via Proton, depois medir a necessidade de Linux nativo. Auditoria do frontend confirmou D-pad/A/B e ausência de leitura direta de eixos; README e rótulo da interface Mac corrigidos para não prometer stick nativo; a mudança de rótulo entrará nos próximos pacotes gerados. Mouse do runtime depende de captura, desligada na configuração inicial; perfil com trackpad dentro do jogo precisa de ensaio específico. Nenhum port Deck/Linux ou perfil Workshop foi entregue/validado nesta etapa.
+
 ## 2026-10-29 — primeiro pacote Windows x64 para teste
 
 Cross-compilados os três candidatos aceitos para PE x64 com MinGW GCC, mantendo o C gerado e os patches existentes. Cada fonte foi conferida contra a proveniência aceita; staging Windows separado e checkout upstream intacto. SDK SDL2 2.32.10 obtido da publicação oficial, com hash conferido; nenhuma mídia foi baixada.

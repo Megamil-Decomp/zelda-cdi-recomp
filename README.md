@@ -79,7 +79,7 @@ The native runtime uses **SDL2**, supporting keyboard, modern USB/Bluetooth cont
 ### 🎮 Gamepad (Xbox, PlayStation, Switch Pro, generic USB controllers)
 | Action | Controller Mapping |
 | :--- | :--- |
-| **Movement** | D-Pad or Left Analog Stick |
+| **Movement** | D-Pad; left stick requires external remapping |
 | **Button 1 (Attack / Confirm)** | Button `A` (Xbox) / `✕` (PlayStation) / `B` (Nintendo) |
 | **Button 2 (Secondary Item)** | Button `B` (Xbox) / `○` (PlayStation) / `A` (Nintendo) |
 

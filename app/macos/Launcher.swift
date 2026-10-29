@@ -171,7 +171,7 @@ private struct L10n {
         case "controls.gamepad":
             return isPt ? "Controle (Gamepad / Joystick)" : "Gamepad (Controller)"
         case "controls.gamepad_dpad":
-            return isPt ? "D-Pad ou Analógico Esquerdo:" : "D-Pad or Left Analog Stick:"
+            return isPt ? "Direcional (D-Pad):" : "D-Pad:"
         case "controls.gamepad_dpad_desc":
             return isPt ? "Movimentação do personagem / cursor" : "Character movement / cursor"
         case "controls.gamepad_a":

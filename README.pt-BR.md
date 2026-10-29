@@ -72,7 +72,7 @@ O runtime utiliza **SDL2 nativo**, suportando teclado, gamepads USB/Bluetooth e 
 ### 🎮 Gamepad (Xbox, PlayStation, Switch Pro, genéricos)
 | Ação | Botão |
 | :--- | :--- |
-| **Movimento** | D-Pad ou Analógico Esquerdo |
+| **Movimento** | D-Pad; analógico esquerdo exige remapeamento externo |
 | **Botão 1 (Atacar / Confirmar)** | Botão `A` (Xbox) / `✕` (PlayStation) |
 | **Botão 2 (Item secundário)** | Botão `B` (Xbox) / `○` (PlayStation) |
 

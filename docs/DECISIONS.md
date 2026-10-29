@@ -1,5 +1,9 @@
 # Decisões
 
+## 2026-10-29 — publicar somente fontes e planejar Deck por evidência
+
+Usuário autorizou push para o remoto existente, sem ROMs nem versão completa. Auditar os objetos/paths dos commits pendentes e enviar apenas código, testes e documentação; não anexar artefatos nem alterar privacidade do repositório. Para Steam Deck, propor primeiro ensaio Windows/Proton com Steam Input, mantendo explícitos os limites de analógico, mouse/captura e interface. Compatibilidade Deck exige teste próprio; consulta à documentação e inspeção local não são aprovação de hardware.
+
 ## 2026-10-29 — Windows no mesmo projeto, com exportação própria
 
 Usuário pediu uma versão Windows para testar e um comando equivalente ao exportador Mac. Reutilizar exatamente os inputs dos candidatos aceitos, conferidos por proveniência/hash, em cópias Windows isoladas. Não reeditar o upstream nem trocar o mecanismo de recompilação. Manter BIOS distinta de Adventure e a BIOS aceita em Faces/Gamelon.

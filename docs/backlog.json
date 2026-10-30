@@ -313,6 +313,26 @@
       "acceptance": "Resolver explicitamente os termos não comerciais específicos do upstream antes de distribuição de derivados; MIT do código próprio não relicencia dependências.",
       "evidence": "docs/UPSTREAM_AUDIT.md",
       "issue_number": 31
+    },
+    {
+      "id": "ZCDI-032",
+      "area": "plataformas",
+      "status": "backlog",
+      "priority": "P3",
+      "title": "Investigar e construir versão experimental para iOS",
+      "acceptance": "Compilar o runtime ARM64 com SDL2 no iOS, adaptar controles de toque/gamepad, acesso local a BIOS/CUE/BIN/saves no sandbox e gerar pacote para teste local.",
+      "evidence": "docs/PORTABILITY.md",
+      "issue_number": 32
+    },
+    {
+      "id": "ZCDI-033",
+      "area": "plataformas",
+      "status": "backlog",
+      "priority": "P3",
+      "title": "Investigar e construir versão experimental para Android",
+      "acceptance": "Compilar o runtime ARM64 com Android NDK e SDL2, adaptar controles de toque/gamepad, acesso local a BIOS/CUE/BIN/saves e validar APK em dispositivo real.",
+      "evidence": "docs/PORTABILITY.md",
+      "issue_number": 33
     }
   ]
 }

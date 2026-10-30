@@ -1,5 +1,10 @@
 # Decisões
 
+## 2026-10-29 — inclusão de versões iOS e Android no backlog público
+
+Usuário pediu incluir versões para iOS e Android no backlog e nos READMEs, e publicar no Git. Cadastrar duas entregas explícitas em `docs/backlog.json` (`ZCDI-032` para iOS e `ZCDI-033` para Android) na área `Plataformas e exportação`, prioridade `P3`, vinculadas às issues correspondentes no GitHub e ao quadro Kanban Project V2. Atualizar `docs/PORTABILITY.md` com o escopo técnico mobile (SDL2 iOS/Android NDK, controles de toque/gamepad, acesso local a BIOS/CUE/BIN/saves e pacotes privados sem mídia comercial) e listar `iOS / Android` na tabela de estado atual de `README.md` e `README.pt-BR.md`. Regenerar `docs/BACKLOG.md` e os resumos dos dois READMEs com `scripts/update_backlog.py`.
+
+
 ## 2026-10-29 — continuidade entre agentes com wiki e skills locais
 
 Usuário pediu documentação suficiente para uma segunda IA continuar sem reconstruir o histórico. Criar um handoff curto, wiki versionada de desenvolvimento/REA/validação e três skills no próprio repositório. Manter detalhes históricos nos documentos existentes, identidades aceitas nos manifestos privados e flags de comandos verificadas no código/CLI. Explicitar diferenças entre clone público e workspace completo, pausa de depuração e pausa do menu, build e aceitação real. As skills não concedem autorização externa nem exigem ferramentas exclusivas de um agente.

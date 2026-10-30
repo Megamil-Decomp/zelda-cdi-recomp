@@ -1,5 +1,10 @@
 # Progresso
 
+## 2026-10-29 — inclusão de iOS e Android no backlog e READMEs
+
+Atendido pedido de adicionar versões para iOS e Android no backlog e nos READMEs. Cadastradas as entregas `ZCDI-032` (iOS, issue #32) e `ZCDI-033` (Android, issue #33) em `docs/backlog.json`, publicadas no repositório e vinculadas ao quadro Kanban público na coluna `Backlog` (`Plataformas e exportação`, `P3`). Atualizados `README.md`, `README.pt-BR.md`, `docs/BACKLOG.md` e `docs/PORTABILITY.md` (contagem pública atualizada para 15 / 33 entregas, 45%). Sincronização `--sync-github`, `--check` e suíte de 151 testes sintéticos Python passaram sem divergências.
+
+
 ## 2026-10-29 — handoff, wiki e skills para outra IA
 
 Criado `AI_HANDOFF.md` como entrada independente do chat, com estado 0.1.7, fontes de verdade, artefatos privados necessários, limites de um clone público e prompt de continuidade. Wiki versionada em `docs/wiki/` cobre navegação/código, padrão de desenvolvimento, REA e validação. Três skills locais em `.agents/skills/` roteiam desenvolvimento, análise REA e diagnóstico/aceitação, com metadados e leitura explícita para agentes sem descoberta automática. Não foi instalada configuração global nem criada uma segunda wiki remota que pudesse divergir do Git principal.

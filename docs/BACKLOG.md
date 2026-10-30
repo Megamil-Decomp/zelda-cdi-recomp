@@ -4,9 +4,9 @@
 
 [Abrir quadro Kanban](https://github.com/users/Megamil-Decomp/projects/1/views/2) · [Backlog e critérios de aceitação](BACKLOG.md)
 
-**15 / 31 entregas cadastradas concluídas (48%)** · atualizado em 2026-10-29.
+**15 / 33 entregas cadastradas concluídas (45%)** · atualizado em 2026-10-29.
 
-Concluído: **15** · Em andamento: **5** · A validar: **3** · Backlog: **8**.
+Concluído: **15** · Em andamento: **5** · A validar: **3** · Backlog: **10**.
 
 A contagem dá o mesmo peso a cada entrega; não é percentual de campanha, esforço, fidelidade ou cobertura nativa. Ampliar o escopo pode reduzir o percentual.
 
@@ -16,7 +16,7 @@ A contagem dá o mesmo peso a cada entrega; não é percentual de campanha, esfo
 | Recompilação e runtime | 5 / 8 | 62% |
 | Compatibilidade dos jogos | 3 / 7 | 43% |
 | Interface e controles | 2 / 4 | 50% |
-| Plataformas e exportação | 2 / 5 | 40% |
+| Plataformas e exportação | 2 / 7 | 29% |
 | Localização PT-BR | 1 / 3 | 33% |
 
 ## Como interpretar
@@ -39,8 +39,8 @@ Os percentuais de instruções nativas publicados em [PROGRESS.md](PROGRESS.md) 
 | [ZCDI-029 · Ampliar localização PT-BR dos três jogos](https://github.com/Megamil-Decomp/zelda-cdi-recomp/issues/29) | — | — | [ZCDI-006 · Retomar ADPCM após reposição do mesmo buffer em Adventure](https://github.com/Megamil-Decomp/zelda-cdi-recomp/issues/6) |
 | [ZCDI-030 · Comparar fidelidade com uma referência independente](https://github.com/Megamil-Decomp/zelda-cdi-recomp/issues/30) | — | — | [ZCDI-007 · Integrar REA à análise dos três jogos](https://github.com/Megamil-Decomp/zelda-cdi-recomp/issues/7) |
 | [ZCDI-031 · Definir termos para distribuição de derivados do runtime](https://github.com/Megamil-Decomp/zelda-cdi-recomp/issues/31) | — | — | [ZCDI-008 · Validar um percurso inicial em Faces of Evil](https://github.com/Megamil-Decomp/zelda-cdi-recomp/issues/8) |
-| — | — | — | [ZCDI-009 · Validar mapa e área de Sakado em Wand of Gamelon](https://github.com/Megamil-Decomp/zelda-cdi-recomp/issues/9) |
-| — | — | — | [ZCDI-010 · Validar percurso conhecido de Adventure a 1x](https://github.com/Megamil-Decomp/zelda-cdi-recomp/issues/10) |
+| [ZCDI-032 · Investigar e construir versão experimental para iOS](https://github.com/Megamil-Decomp/zelda-cdi-recomp/issues/32) | — | — | [ZCDI-009 · Validar mapa e área de Sakado em Wand of Gamelon](https://github.com/Megamil-Decomp/zelda-cdi-recomp/issues/9) |
+| [ZCDI-033 · Investigar e construir versão experimental para Android](https://github.com/Megamil-Decomp/zelda-cdi-recomp/issues/33) | — | — | [ZCDI-010 · Validar percurso conhecido de Adventure a 1x](https://github.com/Megamil-Decomp/zelda-cdi-recomp/issues/10) |
 | — | — | — | [ZCDI-011 · Entregar launcher Mac com seleção, idiomas e saves](https://github.com/Megamil-Decomp/zelda-cdi-recomp/issues/11) |
 | — | — | — | [ZCDI-012 · Entregar menu de opções e mouse livre na versão 0.1.7](https://github.com/Megamil-Decomp/zelda-cdi-recomp/issues/12) |
 | — | — | — | [ZCDI-013 · Automatizar exportação privada completa para outro Mac](https://github.com/Megamil-Decomp/zelda-cdi-recomp/issues/13) |
@@ -80,6 +80,8 @@ Os percentuais de instruções nativas publicados em [PROGRESS.md](PROGRESS.md) 
 - [ZCDI-029 · Ampliar localização PT-BR dos três jogos](https://github.com/Megamil-Decomp/zelda-cdi-recomp/issues/29) — **Backlog**, P3. Mapear recursos por título, traduzir textos autorais, suportar acentos/quebras e investigar legendas sincronizadas preservando áudio original. [Referência](../docs/LOCALIZATION.md).
 - [ZCDI-030 · Comparar fidelidade com uma referência independente](https://github.com/Megamil-Decomp/zelda-cdi-recomp/issues/30) — **Backlog**, P2. Definir cenários e referência identificada de hardware/comparador, medir imagem, áudio e temporização sem confundir cobertura com fidelidade. [Referência](../docs/ROADMAP.md).
 - [ZCDI-031 · Definir termos para distribuição de derivados do runtime](https://github.com/Megamil-Decomp/zelda-cdi-recomp/issues/31) — **Backlog**, P2. Resolver explicitamente os termos não comerciais específicos do upstream antes de distribuição de derivados; MIT do código próprio não relicencia dependências. [Referência](../docs/UPSTREAM_AUDIT.md).
+- [ZCDI-032 · Investigar e construir versão experimental para iOS](https://github.com/Megamil-Decomp/zelda-cdi-recomp/issues/32) — **Backlog**, P3. Compilar o runtime ARM64 com SDL2 no iOS, adaptar controles de toque/gamepad, acesso local a BIOS/CUE/BIN/saves no sandbox e gerar pacote para teste local. [Referência](../docs/PORTABILITY.md).
+- [ZCDI-033 · Investigar e construir versão experimental para Android](https://github.com/Megamil-Decomp/zelda-cdi-recomp/issues/33) — **Backlog**, P3. Compilar o runtime ARM64 com Android NDK e SDL2, adaptar controles de toque/gamepad, acesso local a BIOS/CUE/BIN/saves e validar APK em dispositivo real. [Referência](../docs/PORTABILITY.md).
 
 ## Manutenção
 

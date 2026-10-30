@@ -15,9 +15,9 @@ O código SCC68070 / CD-RTOS / OS-9 é recompilado estaticamente para código na
 <!-- BACKLOG:START -->
 [Abrir quadro Kanban](https://github.com/users/Megamil-Decomp/projects/1/views/2) · [Backlog e critérios de aceitação](docs/BACKLOG.md)
 
-**15 / 31 entregas cadastradas concluídas (48%)** · atualizado em 2026-10-29.
+**15 / 33 entregas cadastradas concluídas (45%)** · atualizado em 2026-10-29.
 
-Concluído: **15** · Em andamento: **5** · A validar: **3** · Backlog: **8**.
+Concluído: **15** · Em andamento: **5** · A validar: **3** · Backlog: **10**.
 
 A contagem dá o mesmo peso a cada entrega; não é percentual de campanha, esforço, fidelidade ou cobertura nativa. Ampliar o escopo pode reduzir o percentual.
 
@@ -27,7 +27,7 @@ A contagem dá o mesmo peso a cada entrega; não é percentual de campanha, esfo
 | Recompilação e runtime | 5 / 8 | 62% |
 | Compatibilidade dos jogos | 3 / 7 | 43% |
 | Interface e controles | 2 / 4 | 50% |
-| Plataformas e exportação | 2 / 5 | 40% |
+| Plataformas e exportação | 2 / 7 | 29% |
 | Localização PT-BR | 1 / 3 | 33% |
 <!-- BACKLOG:END -->
 
@@ -45,6 +45,7 @@ O quadro usa **Backlog → Em andamento → A validar → Concluído**, com crit
 | macOS arm64 | Launcher bilíngue, validação de mídia, saves por título, menu, mouse e exportação portátil | Controle/áudio físicos e teste em outro Mac/macOS 13 |
 | Windows x64 | Runtimes cross-compilados, launcher Win32 e exportador privado completo | Execução real; ZIP de teste anterior não contém o novo menu |
 | Steam Deck / Linux | Plano de port e código de entrada compartilhado | Ensaios em hardware/Proton e empacotamento Linux nativo |
+| iOS / Android | Registrado no backlog ([ZCDI-032](https://github.com/Megamil-Decomp/zelda-cdi-recomp/issues/32), [ZCDI-033](https://github.com/Megamil-Decomp/zelda-cdi-recomp/issues/33)) | Host SDL2 mobile, controles de toque/gamepad, acesso local às mídias e testes em aparelho |
 | PT-BR | Piloto opcional de Adventure: slot vazio e cinco rótulos de botões | Demais textos dos jogos, fontes/recursos e legendas |
 
 Em Adventure, o percurso adicional comparado passou de **89,19% para 92,20% de instruções nativas, incluindo BIOS**. Outro percurso a 1x mediu 92,27%. São proporções de instruções de trechos específicos, não percentuais de campanha concluída nem benchmarks de velocidade. [Método, resultados e limites](docs/PROGRESS.md).

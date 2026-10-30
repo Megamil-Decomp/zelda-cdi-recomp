@@ -15,9 +15,9 @@ Original SCC68070 / CD-RTOS / OS-9 code is statically recompiled to native code,
 <!-- BACKLOG:START -->
 [Open the Kanban board](https://github.com/users/Megamil-Decomp/projects/1/views/2) · [Backlog and acceptance criteria](docs/BACKLOG.md)
 
-**15 / 31 registered deliveries completed (48%)** · updated 2026-10-29.
+**15 / 33 registered deliveries completed (45%)** · updated 2026-10-29.
 
-Done: **15** · In progress: **5** · Awaiting validation: **3** · Backlog: **8**.
+Done: **15** · In progress: **5** · Awaiting validation: **3** · Backlog: **10**.
 
 This counts scoped deliveries equally; it is not a percentage of complete campaigns, effort, fidelity or native-code coverage. Scope changes can lower the percentage.
 
@@ -27,7 +27,7 @@ This counts scoped deliveries equally; it is not a percentage of complete campai
 | Recompilation and runtime | 5 / 8 | 62% |
 | Game compatibility | 3 / 7 | 43% |
 | Interface and controls | 2 / 4 | 50% |
-| Platforms and export | 2 / 5 | 40% |
+| Platforms and export | 2 / 7 | 29% |
 | PT-BR localization | 1 / 3 | 33% |
 <!-- BACKLOG:END -->
 
@@ -45,6 +45,7 @@ Last accepted private Mac build: **0.1.7 (build 8), 2026-10-29**. There is no pu
 | macOS arm64 | Bilingual launcher, media validation, per-title saves, player menu, mouse and portable export | Physical controller/audio and another Mac/macOS 13 acceptance |
 | Windows x64 | Cross-compiled runtimes, Win32 launcher and complete private exporter | Real Windows execution; older preview ZIP lacks the new player menu |
 | Steam Deck / Linux | Port plan and shared input code | Hardware/Proton tests and native Linux packaging |
+| iOS / Android | Registered in backlog ([ZCDI-032](https://github.com/Megamil-Decomp/zelda-cdi-recomp/issues/32), [ZCDI-033](https://github.com/Megamil-Decomp/zelda-cdi-recomp/issues/33)) | Mobile SDL2 host, touch/gamepad controls, local media access and device tests |
 | PT-BR | Optional Adventure pilot: empty-slot label and five menu button labels | Remaining game texts, fonts/resources and subtitles |
 
 For Adventure, the paired additional route measured **89.19% → 92.20% native instructions, including BIOS**. A later 1x route measured 92.27%. These are interval-specific instruction ratios, not campaign completion or a speed benchmark. [Method, results and limitations](docs/PROGRESS.md).

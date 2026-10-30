@@ -155,6 +155,7 @@ Historical development captures; they are not a certification of the latest buil
 
 ## Documentation
 
+- [Continue with another AI](docs/AI_HANDOFF.md) · [Project wiki](docs/wiki/Home.md) · [Repository skills](docs/AI_HANDOFF.md#skills-do-repositório)
 - [Backlog, priorities and acceptance criteria](docs/BACKLOG.md)
 - [Technical progress and limitations](docs/PROGRESS.md) · [Decisions](docs/DECISIONS.md)
 - [Architecture](docs/ARCHITECTURE.md) · [Original technical milestones](docs/ROADMAP.md)

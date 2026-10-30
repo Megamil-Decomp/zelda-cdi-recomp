@@ -1,0 +1,4 @@
+interface:
+  display_name: "Zelda CD-i — Desenvolvimento"
+  short_description: "Retomar trabalho e validar mudanças no projeto"
+  default_prompt: "Use $zeldas-cdi-development para continuar a tarefa atual no Zelda CD-i seguindo o handoff e os critérios de aceitação."

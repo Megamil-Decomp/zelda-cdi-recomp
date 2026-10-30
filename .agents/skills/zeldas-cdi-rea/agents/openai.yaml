@@ -1,0 +1,4 @@
+interface:
+  display_name: "Zelda CD-i — REA"
+  short_description: "Analisar módulos com REA e justificar novas seeds"
+  default_prompt: "Use $zeldas-cdi-rea para investigar o módulo autorizado e propor entradas estáticas verificáveis sem promover o candidato."

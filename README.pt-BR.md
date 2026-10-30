@@ -155,6 +155,7 @@ Registros históricos de desenvolvimento; não certificam a build mais recente n
 
 ## Documentação
 
+- [Continuar com outra IA](docs/AI_HANDOFF.md) · [Wiki do projeto](docs/wiki/Home.md) · [Skills locais](docs/AI_HANDOFF.md#skills-do-repositório)
 - [Backlog, prioridades e critérios de aceitação](docs/BACKLOG.md)
 - [Progresso técnico e limitações](docs/PROGRESS.md) · [Decisões](docs/DECISIONS.md)
 - [Arquitetura](docs/ARCHITECTURE.md) · [Marcos técnicos originais](docs/ROADMAP.md)

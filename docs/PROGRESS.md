@@ -1,5 +1,16 @@
 # Progresso
 
+## 2026-10-29 — handoff, wiki e skills para outra IA
+
+Criado `AI_HANDOFF.md` como entrada independente do chat, com estado 0.1.7, fontes de verdade, artefatos privados necessários, limites de um clone público e prompt de continuidade. Wiki versionada em `docs/wiki/` cobre navegação/código, padrão de desenvolvimento, REA e validação. Três skills locais em `.agents/skills/` roteiam desenvolvimento, análise REA e diagnóstico/aceitação, com metadados e leitura explícita para agentes sem descoberta automática. Não foi instalada configuração global nem criada uma segunda wiki remota que pudesse divergir do Git principal.
+
+AGENTS e READMEs apontam para a entrada nova; instruções de fase zero e referências antigas de REA foram identificadas como históricas. Preservados os limites de autorização, mídia, saves e licença. Detalhes que evitam perda de contexto: catálogo/proveniência aceitos, build de base versus candidato otimizado, staging descartável, envelope 0x100, perfil Prog suportado, pausa de depuração que não retoma sozinha, saída forçada do harness e ausência de testes físicos/Windows.
+
+**151 testes Python passaram**. As três skills passaram no validador do skill-creator; links locais de 11 entradas e cinco comandos de ajuda foram conferidos. Ensaio real com módulo OS-9 **autoral sintético** e ledger sintético executou o preparador e duas operações REA/Ghidra: mapeamento e função, ambas com identidade/Evidence aceitos, `procedure_completed=true`, análise estática e `runtime_changed=false`. O ensaio detectou a restrição de saída a `data/private/rea-pilot/` ou `build/`, corrigida nos exemplos antes da entrega. Relatórios privados em `data/private/ai-handoff/` e `data/private/rea-pilot/ai-handoff-synthetic/`.
+
+Não houve lançamento/reconstrução/promoção dos jogos, mudança de save pessoal ou edição do upstream/core. `update_backlog.py --check` continua consistente; a documentação não altera os 31 critérios/estados já cadastrados.
+
+
 ## 2026-10-29 — README atualizado e quadro público de entregas
 
 Atendido pedido de atualizar o leia-me e organizar um backlog estilo Trello no GitHub. Criado Project público vinculado ao repositório, com visão Board, quatro estados ordenados, área e prioridade. Cadastradas 31 issues com critérios de aceitação e referências públicas: 15 entregas concluídas/fechadas, 5 frentes em andamento, 3 a validar e 8 no backlog. API conferiu vínculo, visibilidade, contagens e correspondência das 15 issues fechadas. Quadro: https://github.com/users/Megamil-Decomp/projects/1/views/2.

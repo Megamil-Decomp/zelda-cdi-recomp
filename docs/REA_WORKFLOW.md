@@ -1,6 +1,6 @@
 # Investigação com REA
 
-Estado: piloto local de pesquisa em Faces of Evil, iniciado em 27/10/2026. REA é ferramenta de análise; a emissão continua com CdiRecomp e a execução ainda combina recompilação estática e fallback interpretado.
+Este fluxo começou no piloto de Faces em 27/10/2026 e foi aplicado também a Gamelon/Adventure. REA é ferramenta de análise; a emissão continua com CdiRecomp e a execução combina recompilação estática e fallback interpretado. Para retomar, começar pelo [handoff](AI_HANDOFF.md) e pela [rota resumida REA](wiki/REA.md). Catálogo aceito e registros recentes prevalecem sobre exemplos históricos de candidatos nesta página.
 
 ## Ambiente isolado
 
@@ -52,7 +52,7 @@ python3 scripts/run_faces_rea_candidate.py --check
 python3 scripts/run_faces_rea_candidate.py
 ```
 
-O primeiro comando apenas confere identidades. O segundo abre o candidato experimental de Faces a 1x, com configuração/bateria separadas em `data/private/rea-pilot/interactive-player/` e log novo por sessão. Não substitui o launcher nem usa os saves do aplicativo normal. Requer os artefatos privados do piloto; não é distribuição portátil e não contém certificação de campanha/áudio. O linker da SDL local também advertiu sobre versão mínima de macOS mais recente que o deployment target declarado.
+O primeiro comando apenas confere identidades. O segundo abre o candidato experimental de Faces a 1x, com configuração/bateria separadas em `data/private/rea-pilot/interactive-player/` e log novo por sessão. Não substitui o launcher nem usa os saves do aplicativo normal. Requer os artefatos privados do piloto; não é distribuição portátil e não contém certificação de campanha/áudio. A advertência de mínimo macOS da SDL ocorreu nos binários antigos do piloto; a entrega Mac 0.1.7 usa SDL2 privado compilado com mínimo 13. Conferir qual runtime está sendo executado, sem transferir a aceitação do pacote atual ao piloto histórico.
 
 Após a investigação da regressão, o manifesto privado seleciona `irq-fixed`, build com os patches 0008 de fetch e 0009 de prioridade de IRQ. Ela passou pelo replay CMake de ataques e avanço à direita na primeira área e pelo ensaio de abertura a 1x. São trechos curtos, não certificação de campanha; a identidade do objeto específico descrito pelo usuário continua uma limitação. Ver `FACES_GAMEPLAY_REGRESSION_PLAN.md` e o progresso de 28/10.
 
@@ -83,4 +83,4 @@ python3 scripts/build_macos_app.py --output dist/rea \
   --menu-mod 'dist/ptbr-menu/Zelda CD-i.app/Contents/Resources/adventure-menu-ptbr.txt'
 ```
 
-O catálogo habilita a versão privada 0.1.5. A seleção não certifica campanha. Ensaios, imagens, seeds e proveniência detalhada ficam em `data/private/rea-titles/`; os testes sintéticos do catálogo não dependem de mídia comercial.
+O exemplo foi usado na entrega 0.1.5; o catálogo é mutável e hoje deve ser conferido contra o manifesto da entrega selecionada, sem inferir versão pelo nome. A seleção não certifica campanha. Ensaios, imagens, seeds e proveniência detalhada ficam em `data/private/rea-titles/`; os testes sintéticos do catálogo não dependem de mídia comercial.

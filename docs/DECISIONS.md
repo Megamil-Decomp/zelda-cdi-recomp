@@ -1,5 +1,12 @@
 # Decisões
 
+## 2026-10-29 — continuidade entre agentes com wiki e skills locais
+
+Usuário pediu documentação suficiente para uma segunda IA continuar sem reconstruir o histórico. Criar um handoff curto, wiki versionada de desenvolvimento/REA/validação e três skills no próprio repositório. Manter detalhes históricos nos documentos existentes, identidades aceitas nos manifestos privados e flags de comandos verificadas no código/CLI. Explicitar diferenças entre clone público e workspace completo, pausa de depuração e pausa do menu, build e aceitação real. As skills não concedem autorização externa nem exigem ferramentas exclusivas de um agente.
+
+Aceitação desta documentação: links resolvidos, skills com frontmatter validado, comandos de ajuda conferidos, caminho de retomada compreensível sem o chat e suíte sintética existente passando. Não reconstruir nem promover runtimes para documentar o fluxo. O diretório de wiki fica no Git principal para acompanhar o código; não depende de configuração de uma wiki remota separada.
+
+
 ## 2026-10-29 — backlog público com aceitação e contagem reproduzível
 
 Usuário pediu atualização do README e quadro estilo Trello no GitHub. Usar Project público vinculado ao repositório, issues com critério/área/prioridade e estados Backlog, Em andamento, A validar e Concluído. Registrar entregas já aceitas como issues fechadas, mantendo os limites de cada cenário; não equiparar build Windows a execução Windows nem piloto PT-BR a tradução integral.

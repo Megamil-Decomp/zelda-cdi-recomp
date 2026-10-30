@@ -1,0 +1,4 @@
+interface:
+  display_name: "Zelda CD-i — Validação"
+  short_description: "Reproduzir falhas e validar candidatos privados"
+  default_prompt: "Use $zeldas-cdi-validation para comparar o candidato com a referência usando bateria copiada e critérios explícitos."
